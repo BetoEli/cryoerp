@@ -1,0 +1,12 @@
+export enum IngredientCategory {
+  PROTEIN = 'PROTEIN',
+  DAIRY = 'DAIRY',
+  GRAIN = 'GRAIN',
+  VEGETABLE = 'VEGETABLE',
+  FRUIT = 'FRUIT',
+  SPICE = 'SPICE',
+  CONDIMENT = 'CONDIMENT',
+  BEVERAGE = 'BEVERAGE',
+  SNACK = 'SNACK',
+  OTHER = 'OTHER',
+}
