@@ -70,10 +70,10 @@ export class InventoryService {
     const results: LocationSummary[] = await this.em
       .createQueryBuilder(InventoryItem, 'i')
       .select([
-        'l.id as locationId',
-        'l.name as locationName',
-        'count(i.id) as itemCount',
-        'sum(i.quantity) as totalQuantity',
+        raw('l.id as "locationId"'),
+        raw('l.name as "locationName"'),
+        raw('count(i.id) as "itemCount"'),
+        raw('sum(i.quantity) as "totalQuantity"'),
         raw(
           'sum(case when i.expiration_date is not null and i.expiration_date < now() then 1 else 0 end) as "expiredCount"',
         ),

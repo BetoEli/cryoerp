@@ -1,5 +1,6 @@
 import {
   IsNotEmpty,
+  IsInt,
   IsNumber,
   IsPositive,
   IsString,
@@ -8,8 +9,7 @@ import {
 } from 'class-validator';
 
 export class CreateRecipeIngredientDto {
-  @IsNumber()
-  @IsNotEmpty()
+  @IsInt()
   @IsPositive()
   ingredientId: number;
 

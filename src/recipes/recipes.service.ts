@@ -57,7 +57,7 @@ export class RecipesService {
 
     await this.em.persistAndFlush(recipe);
 
-    return recipe;
+    return this.findOne(recipe.id);
   }
 
   async findAll() {
@@ -142,7 +142,13 @@ export class RecipesService {
   async findAvailable(): Promise<AvailableRecipe[]> {
     return this.em
       .createQueryBuilder(Recipe, 'r')
-      .select(['r.id', 'r.name', 'r.servings', 'r.prepTime', 'r.cookTime'])
+      .select([
+        'r.id',
+        'r.name',
+        'r.servings',
+        raw('r.prep_time as "prepTime"'),
+        raw('r.cook_time as "cookTime"'),
+      ])
       .addSelect(raw('count(ri.id) as "ingredientCount"'))
       .join('r.recipeIngredients', 'ri')
       .groupBy('r.id')
@@ -188,6 +194,7 @@ export class RecipesService {
           ingredientId: ri.ingredient.id,
           ingredientName: ri.ingredient.name,
           required: ri.quantity,
+          requiredUnit: ri.unit,
           available,
           sufficient: available >= ri.quantity,
         };
