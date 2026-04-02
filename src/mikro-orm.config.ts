@@ -14,5 +14,5 @@ export default defineConfig({
   },
   entities: ['./dist/**/*.entity.js'],
   entitiesTs: ['./src/**/*.entity.ts'],
-  // debug: true,
+  debug: true,
 });

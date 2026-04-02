@@ -9,6 +9,7 @@ import { IngredientQueryDto } from './dto/ingredient-query.dto';
 import { UpdateIngredientDto } from './dto/update-ingredient.dto';
 import { Ingredient } from './entities/ingredient.entity';
 import { InventoryItem } from '../inventory/entities/inventory.entity';
+import { RecipeIngredient } from '../recipes/entities/recipe-ingredient.entity';
 
 @Injectable()
 export class IngredientsService {
@@ -71,6 +72,15 @@ export class IngredientsService {
     if (inventoryCount > 0) {
       throw new ConflictException(
         'Cannot delete ingredient: inventory items still reference it',
+      );
+    }
+
+    const recipeIngredientCount = await this.em.count(RecipeIngredient, {
+      ingredient: { id },
+    });
+    if (recipeIngredientCount > 0) {
+      throw new ConflictException(
+        'Cannot delete ingredient: recipes still reference it',
       );
     }
 

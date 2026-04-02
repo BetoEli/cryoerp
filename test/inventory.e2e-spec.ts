@@ -81,6 +81,7 @@ describe('Inventory (e2e)', () => {
   it('creates a location', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/locations')
+      .set('X-API-Key', 'test-api-key')
       .send({
         name: 'Kitchen Fridge',
         type: LocationType.FRIDGE,
@@ -97,6 +98,7 @@ describe('Inventory (e2e)', () => {
   it('creates an ingredient', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/ingredients')
+      .set('X-API-Key', 'test-api-key')
       .send({
         name: 'Chicken Breast',
         category: IngredientCategory.PROTEIN,
@@ -114,6 +116,7 @@ describe('Inventory (e2e)', () => {
   it('creates an inventory item that links ingredient and location', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/inventory')
+      .set('X-API-Key', 'test-api-key')
       .send({
         ingredientId,
         locationId,
@@ -137,6 +140,7 @@ describe('Inventory (e2e)', () => {
   it('gets the inventory item with populated ingredient/location names', async () => {
     const response = await request(app.getHttpServer())
       .get(`/api/inventory/${inventoryId}`)
+      .set('X-API-Key', 'test-api-key')
       .expect(200);
 
     const body = response.body as InventoryResponse;
@@ -149,6 +153,7 @@ describe('Inventory (e2e)', () => {
   it('gets the location with inventory items and nested ingredient details', async () => {
     const response = await request(app.getHttpServer())
       .get(`/api/locations/${locationId}`)
+      .set('X-API-Key', 'test-api-key')
       .expect(200);
 
     const body = response.body as LocationWithInventoryResponse;
@@ -162,6 +167,7 @@ describe('Inventory (e2e)', () => {
   it('rejects deleting the location while inventory still lives there', async () => {
     const response = await request(app.getHttpServer())
       .delete(`/api/locations/${locationId}`)
+      .set('X-API-Key', 'test-api-key')
       .expect(409);
 
     expect(response.body.statusCode).toBe(409);
@@ -171,10 +177,12 @@ describe('Inventory (e2e)', () => {
   it('deletes inventory first, then location, and everyone goes home happy', async () => {
     await request(app.getHttpServer())
       .delete(`/api/inventory/${inventoryId}`)
+      .set('X-API-Key', 'test-api-key')
       .expect(200);
 
     await request(app.getHttpServer())
       .delete(`/api/locations/${locationId}`)
+      .set('X-API-Key', 'test-api-key')
       .expect(200);
   });
 });

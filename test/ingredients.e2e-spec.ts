@@ -63,11 +63,12 @@ describe('Ingredients (e2e)', () => {
       name: 'Milk',
       category: IngredientCategory.DAIRY,
       defaultUnit: 'oz',
-      barcode: '12345',
+      barcode: '12345678',
     };
 
     const response = await request(app.getHttpServer())
       .post('/api/ingredients')
+      .set('X-API-Key', 'test-api-key')
       .send(payload)
       .expect(201);
 
@@ -77,7 +78,7 @@ describe('Ingredients (e2e)', () => {
     expect(body.name).toBe(payload.name);
     expect(body.category).toBe(payload.category);
     expect(body.defaultUnit).toBe(payload.defaultUnit);
-    expect(body.barcode).toBe(payload.barcode);
+    expect(body.barcode).toBe('12345678');
 
     createdIngredientId = body.id;
   });
@@ -85,6 +86,7 @@ describe('Ingredients (e2e)', () => {
   it('GET /api/ingredients returns created ingredients', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/ingredients')
+      .set('X-API-Key', 'test-api-key')
       .expect(200);
 
     const body = response.body as IngredientResponse[];
@@ -103,6 +105,7 @@ describe('Ingredients (e2e)', () => {
   it('GET /api/ingredients/:id returns a single ingredient', async () => {
     const response = await request(app.getHttpServer())
       .get(`/api/ingredients/${createdIngredientId}`)
+      .set('X-API-Key', 'test-api-key')
       .expect(200);
 
     const body = response.body as IngredientResponse;
@@ -114,6 +117,7 @@ describe('Ingredients (e2e)', () => {
   it('PATCH /api/ingredients/:id updates and returns the ingredient', async () => {
     const response = await request(app.getHttpServer())
       .patch(`/api/ingredients/${createdIngredientId}`)
+      .set('X-API-Key', 'test-api-key')
       .send({ defaultUnit: 'cups' })
       .expect(200);
 
@@ -125,17 +129,19 @@ describe('Ingredients (e2e)', () => {
 
   it('GET /api/ingredients/barcode/:code returns ingredient by barcode', async () => {
     const response = await request(app.getHttpServer())
-      .get('/api/ingredients/barcode/12345')
+      .get('/api/ingredients/barcode/12345678')
+      .set('X-API-Key', 'test-api-key')
       .expect(200);
 
     const body = response.body as IngredientResponse;
 
     expect(body.id).toBe(createdIngredientId);
-    expect(body.barcode).toBe('12345');
+    expect(body.barcode).toBe('12345678');
   });
 
   it('GET /api/ingredients filters by category', async () => {
-    await request(app.getHttpServer()).post('/api/ingredients').send({
+    await request(app.getHttpServer()).post('/api/ingredients')
+      .set('X-API-Key', 'test-api-key').send({
       name: 'Rice',
       category: IngredientCategory.GRAIN,
       defaultUnit: 'lbs',
@@ -144,6 +150,7 @@ describe('Ingredients (e2e)', () => {
 
     const response = await request(app.getHttpServer())
       .get('/api/ingredients?category=DAIRY')
+      .set('X-API-Key', 'test-api-key')
       .expect(200);
 
     const body = response.body as IngredientResponse[];
@@ -157,6 +164,7 @@ describe('Ingredients (e2e)', () => {
   it('GET /api/ingredients filters by search string', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/ingredients?search=milk')
+      .set('X-API-Key', 'test-api-key')
       .expect(200);
 
     const body = response.body as IngredientResponse[];
@@ -170,12 +178,14 @@ describe('Ingredients (e2e)', () => {
   it('DELETE /api/ingredients/:id deletes the ingredient', async () => {
     await request(app.getHttpServer())
       .delete(`/api/ingredients/${createdIngredientId}`)
+      .set('X-API-Key', 'test-api-key')
       .expect(200);
   });
 
   it('GET /api/ingredients/:id returns 404 for deleted ingredient', async () => {
     await request(app.getHttpServer())
       .get(`/api/ingredients/${createdIngredientId}`)
+      .set('X-API-Key', 'test-api-key')
       .expect(404);
   });
 });

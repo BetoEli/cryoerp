@@ -8,13 +8,23 @@ import { InventoryItem } from './entities/inventory.entity';
 
 describe('InventoryService', () => {
   let service: InventoryService;
+  const mockQb = {
+    select: jest.fn().mockReturnThis(),
+    leftJoin: jest.fn().mockReturnThis(),
+    groupBy: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    execute: jest.fn(),
+  };
+
   const mockEm = {
     findOne: jest.fn(),
     create: jest.fn(),
     persistAndFlush: jest.fn(),
     findAll: jest.fn(),
+    find: jest.fn(),
     flush: jest.fn(),
     removeAndFlush: jest.fn(),
+    createQueryBuilder: jest.fn().mockReturnValue(mockQb),
   };
 
   beforeEach(async () => {
@@ -71,9 +81,14 @@ describe('InventoryService', () => {
         location,
         quantity: 2.5,
         unit: 'lbs',
-        expirationDate: expect.any(Date),
       }),
     );
+
+    const createCalls = mockEm.create.mock.calls as Array<
+      [typeof InventoryItem, { expirationDate?: Date }]
+    >;
+    const createdCall = createCalls[0][1];
+    expect(createdCall.expirationDate).toBeInstanceOf(Date);
     expect(mockEm.persistAndFlush).toHaveBeenCalledWith(created);
     expect(result).toBe(created);
   });
@@ -124,6 +139,58 @@ describe('InventoryService', () => {
     expect(result).toEqual(rows);
   });
 
+  it('findSummary() executes a QueryBuilder query and returns the result', async () => {
+    const expected = [
+      {
+        locationId: 1,
+        locationName: 'Kitchen Fridge',
+        itemCount: 2,
+        totalQuantity: 5,
+        expiredCount: 1,
+      },
+      {
+        locationId: 2,
+        locationName: 'Pantry',
+        itemCount: 1,
+        totalQuantity: 5,
+        expiredCount: 0,
+      },
+    ];
+
+    mockQb.execute.mockResolvedValue(expected);
+
+    const result = await service.findSummary();
+
+    expect(mockEm.createQueryBuilder).toHaveBeenCalled();
+    expect(mockQb.execute).toHaveBeenCalled();
+    expect(result).toEqual(expected);
+  });
+
+  it('findExpiring() returns items expiring within the default window', async () => {
+    const rows = [{ id: 1 }] as InventoryItem[];
+    mockEm.find.mockResolvedValue(rows);
+
+    const result = await service.findExpiring();
+
+    const findCalls = mockEm.find.mock.calls as Array<
+      [
+        typeof InventoryItem,
+        { expirationDate: { $gte: Date; $lte: Date } },
+        { populate: string[]; orderBy: { expirationDate: 'asc' } },
+      ]
+    >;
+    const [entity, filter, options] = findCalls[0];
+
+    expect(entity).toBe(InventoryItem);
+    expect(filter.expirationDate.$gte).toBeInstanceOf(Date);
+    expect(filter.expirationDate.$lte).toBeInstanceOf(Date);
+    expect(options).toEqual({
+      populate: ['ingredient', 'location'],
+      orderBy: { expirationDate: 'asc' },
+    });
+    expect(result).toEqual(rows);
+  });
+
   it('resolves new references when ingredientId or locationId changes', async () => {
     const oldIngredient = { id: 1, name: 'Old Thing' } as Ingredient;
     const newIngredient = { id: 2, name: 'New Thing' } as Ingredient;
@@ -137,9 +204,7 @@ describe('InventoryService', () => {
       unit: 'kg',
     } as InventoryItem;
 
-    jest
-      .spyOn(service, 'findOne')
-      .mockResolvedValue(item);
+    jest.spyOn(service, 'findOne').mockResolvedValue(item);
     mockEm.findOne
       .mockResolvedValueOnce(newIngredient)
       .mockResolvedValueOnce(newLocation);
@@ -164,12 +229,12 @@ describe('InventoryService', () => {
 
   it('finds and removes the entity', async () => {
     const item = { id: 55 } as InventoryItem;
-    jest.spyOn(service, 'findOne').mockResolvedValue(item);
+    const findOneSpy = jest.spyOn(service, 'findOne').mockResolvedValue(item);
     mockEm.removeAndFlush.mockResolvedValue(undefined);
 
     await service.remove(55);
 
-    expect(service.findOne).toHaveBeenCalledWith(55);
+    expect(findOneSpy).toHaveBeenCalledWith(55);
     expect(mockEm.removeAndFlush).toHaveBeenCalledWith(item);
   });
 });

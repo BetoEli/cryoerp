@@ -1,10 +1,12 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { MikroORM } from '@mikro-orm/postgresql';
+import { Public } from '../common/decorators/public.decorator';
 
 @Controller('health')
 export class HealthController {
   constructor(private readonly orm: MikroORM) {}
 
+  @Public()
   @Get()
   async getHealth() {
     const isDatabaseConnected = await this.orm.isConnected();

@@ -1,10 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/postgresql';
+import { FilterQuery, FindOptions, raw } from '@mikro-orm/core';
 import { CreateInventoryItemDto } from './dto/create-inventory.dto';
 import { UpdateInventoryItemDto } from './dto/update-inventory.dto';
 import { Ingredient } from '../ingredients/entities/ingredient.entity';
 import { Location } from '../locations/entities/location.entity';
 import { InventoryItem } from './entities/inventory.entity';
+
+export interface LocationSummary {
+  locationId: number;
+  locationName: string;
+  itemCount: number;
+  totalQuantity: number;
+  expiredCount: number;
+}
 
 @Injectable()
 export class InventoryService {
@@ -55,6 +64,48 @@ export class InventoryService {
     return this.em.findAll(InventoryItem, {
       populate: ['ingredient', 'location'],
     });
+  }
+
+  async findSummary(): Promise<LocationSummary[]> {
+    const results: LocationSummary[] = await this.em
+      .createQueryBuilder(InventoryItem, 'i')
+      .select([
+        'l.id as locationId',
+        'l.name as locationName',
+        'count(i.id) as itemCount',
+        'sum(i.quantity) as totalQuantity',
+        raw(
+          'sum(case when i.expiration_date is not null and i.expiration_date < now() then 1 else 0 end) as "expiredCount"',
+        ),
+      ])
+      .leftJoin('i.location', 'l')
+      .groupBy(['l.id', 'l.name'])
+      .orderBy({ 'l.name': 'asc' })
+      .execute();
+
+    return results;
+  }
+
+  async findExpiring(days = 7) {
+    const now = new Date();
+    const cutoff = new Date(now);
+    cutoff.setDate(cutoff.getDate() + days);
+
+    const where: FilterQuery<InventoryItem> = {
+      expirationDate: {
+        $gte: now,
+        $lte: cutoff,
+      },
+    };
+
+    const options: FindOptions<InventoryItem, 'ingredient' | 'location'> = {
+      populate: ['ingredient', 'location'],
+      orderBy: {
+        expirationDate: 'asc',
+      },
+    };
+
+    return this.em.find(InventoryItem, where, options);
   }
 
   async findOne(id: number) {

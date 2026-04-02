@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
@@ -10,6 +10,8 @@ import { IngredientsModule } from './ingredients/ingredients.module';
 import { InventoryModule } from './inventory/inventory.module';
 import mikroOrmConfig from './mikro-orm.config';
 import { QueryPerformanceInterceptor } from './common/interceptors/query-performance.interceptor';
+import { RecipesModule } from './recipes/recipes.module';
+import { ApiKeyGuard } from './common/guards/api-key.guard';
 
 @Module({
   imports: [
@@ -19,10 +21,15 @@ import { QueryPerformanceInterceptor } from './common/interceptors/query-perform
     LocationsModule,
     IngredientsModule,
     InventoryModule,
+    RecipesModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ApiKeyGuard,
+    },
     {
       provide: APP_INTERCEPTOR,
       useClass: QueryPerformanceInterceptor,

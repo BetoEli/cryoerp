@@ -125,7 +125,7 @@ describe('IngredientsService', () => {
       defaultUnit: 'oz',
     } as Ingredient;
     mockEm.findOne.mockResolvedValue(ingredient);
-    mockEm.count.mockResolvedValue(0);
+    mockEm.count.mockResolvedValueOnce(0).mockResolvedValueOnce(0);
     mockEm.removeAndFlush.mockResolvedValue(undefined);
 
     await service.remove(2);
@@ -144,6 +144,21 @@ describe('IngredientsService', () => {
 
     mockEm.findOne.mockResolvedValue(ingredient);
     mockEm.count.mockResolvedValue(1);
+
+    await expect(service.remove(2)).rejects.toThrow(ConflictException);
+    expect(mockEm.removeAndFlush).not.toHaveBeenCalled();
+  });
+
+  it('throws ConflictException when recipes still depend on the ingredient', async () => {
+    const ingredient = {
+      id: 2,
+      name: 'Cheese',
+      category: IngredientCategory.DAIRY,
+      defaultUnit: 'oz',
+    } as Ingredient;
+
+    mockEm.findOne.mockResolvedValue(ingredient);
+    mockEm.count.mockResolvedValueOnce(0).mockResolvedValueOnce(1);
 
     await expect(service.remove(2)).rejects.toThrow(ConflictException);
     expect(mockEm.removeAndFlush).not.toHaveBeenCalled();

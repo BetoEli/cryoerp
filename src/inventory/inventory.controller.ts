@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  DefaultValuePipe,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { CreateInventoryDto } from './dto/create-inventory.dto';
 import { UpdateInventoryDto } from './dto/update-inventory.dto';
@@ -15,6 +26,18 @@ export class InventoryController {
   @Get()
   findAll() {
     return this.inventoryService.findAll();
+  }
+
+  @Get('summary')
+  summary() {
+    return this.inventoryService.findSummary();
+  }
+
+  @Get('expiring')
+  findExpiring(
+    @Query('days', new DefaultValuePipe(7), ParseIntPipe) days: number,
+  ) {
+    return this.inventoryService.findExpiring(days);
   }
 
   @Get(':id')

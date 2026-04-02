@@ -7,6 +7,8 @@ describe('InventoryController', () => {
   let service: {
     create: jest.Mock;
     findAll: jest.Mock;
+    findSummary: jest.Mock;
+    findExpiring: jest.Mock;
     findOne: jest.Mock;
     update: jest.Mock;
     remove: jest.Mock;
@@ -15,6 +17,8 @@ describe('InventoryController', () => {
   const mockService = {
     create: jest.fn(),
     findAll: jest.fn(),
+    findSummary: jest.fn(),
+    findExpiring: jest.fn(),
     findOne: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
@@ -64,6 +68,42 @@ describe('InventoryController', () => {
     const result = await controller.findAll();
 
     expect(service.findAll).toHaveBeenCalled();
+    expect(result).toEqual(rows);
+  });
+
+  it('calls service.findSummary', async () => {
+    const rows = [
+      {
+        locationId: 1,
+        locationName: 'Kitchen Fridge',
+        itemCount: 12,
+        totalQuantity: 45,
+        expiredCount: 2,
+      },
+    ];
+    service.findSummary.mockResolvedValue(rows);
+
+    const controllerWithSummary = controller as {
+      summary: () => Promise<typeof rows>;
+    };
+
+    const result = await controllerWithSummary.summary();
+
+    expect(service.findSummary).toHaveBeenCalled();
+    expect(result).toEqual(rows);
+  });
+
+  it('calls service.findExpiring with default days', async () => {
+    const rows = [{ id: 1 }];
+    service.findExpiring.mockResolvedValue(rows);
+
+    const controllerWithFindExpiring = controller as {
+      findExpiring: (days: number) => Promise<typeof rows>;
+    };
+
+    const result = await controllerWithFindExpiring.findExpiring(7);
+
+    expect(service.findExpiring).toHaveBeenCalledWith(7);
     expect(result).toEqual(rows);
   });
 

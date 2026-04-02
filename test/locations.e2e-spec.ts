@@ -66,6 +66,7 @@ describe('Locations (e2e)', () => {
 
     const response = await request(app.getHttpServer())
       .post('/api/locations')
+      .set('X-API-Key', 'test-api-key')
       .send(payload)
       .expect(201);
 
@@ -87,6 +88,7 @@ describe('Locations (e2e)', () => {
 
     const response = await request(app.getHttpServer())
       .post('/api/locations')
+      .set('X-API-Key', 'test-api-key')
       .send(invalidPayload)
       .expect(400);
 
@@ -99,6 +101,7 @@ describe('Locations (e2e)', () => {
 
     const response = await request(app.getHttpServer())
       .post('/api/locations')
+      .set('X-API-Key', 'test-api-key')
       .send({
         name: 'Pantry Shelf',
         type: LocationType.PANTRY,
@@ -116,6 +119,7 @@ describe('Locations (e2e)', () => {
   it('GET /api/locations returns the created location in the list', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/locations')
+      .set('X-API-Key', 'test-api-key')
       .expect(200);
 
     const body = response.body as LocationResponse[];
@@ -135,6 +139,7 @@ describe('Locations (e2e)', () => {
   it('GET /api/locations/:id returns a single location', async () => {
     const response = await request(app.getHttpServer())
       .get(`/api/locations/${createdLocationId}`)
+      .set('X-API-Key', 'test-api-key')
       .expect(200);
 
     const body = response.body as LocationResponse;
@@ -147,6 +152,7 @@ describe('Locations (e2e)', () => {
   it('PATCH /api/locations/:id updates a field and returns the updated location', async () => {
     const response = await request(app.getHttpServer())
       .patch(`/api/locations/${createdLocationId}`)
+      .set('X-API-Key', 'test-api-key')
       .send({ description: 'Updated description' })
       .expect(200);
 
@@ -159,12 +165,14 @@ describe('Locations (e2e)', () => {
   it('DELETE /api/locations/:id deletes the location and returns 200', async () => {
     await request(app.getHttpServer())
       .delete(`/api/locations/${createdLocationId}`)
+      .set('X-API-Key', 'test-api-key')
       .expect(200);
   });
 
   it('GET /api/locations/:id with non-existent ID returns 404', async () => {
     await request(app.getHttpServer())
       .get(`/api/locations/${createdLocationId}`)
+      .set('X-API-Key', 'test-api-key')
       .expect(404);
   });
 });
