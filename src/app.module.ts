@@ -12,6 +12,10 @@ import mikroOrmConfig from './mikro-orm.config';
 import { QueryPerformanceInterceptor } from './common/interceptors/query-performance.interceptor';
 import { RecipesModule } from './recipes/recipes.module';
 import { ApiKeyGuard } from './common/guards/api-key.guard';
+import { ScheduleModule } from '@nestjs/schedule';
+import { UserModule } from './user/user.module';
+import { UseService } from './use/use.service';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +26,9 @@ import { ApiKeyGuard } from './common/guards/api-key.guard';
     IngredientsModule,
     InventoryModule,
     RecipesModule,
+    ScheduleModule.forRoot(),
+    UserModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [
@@ -34,6 +41,7 @@ import { ApiKeyGuard } from './common/guards/api-key.guard';
       provide: APP_INTERCEPTOR,
       useClass: QueryPerformanceInterceptor,
     },
+    UseService,
   ],
 })
 export class AppModule {}

@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { defineConfig } from '@mikro-orm/postgresql';
+import { SeedManager } from '@mikro-orm/seeder';
 
 export default defineConfig({
   host: process.env.DB_HOST,
@@ -12,7 +13,11 @@ export default defineConfig({
       statement_timeout: 5000,
     },
   },
-  entities: ['./dist/**/*.entity.js'],
-  entitiesTs: ['./src/**/*.entity.ts'],
+  entities: ['./dist/**/*.entity.js', './user/user.entity.js'],
+  entitiesTs: ['./src/**/*.entity.ts', './src/User/user.entity.ts'],
   debug: true,
+  extensions: [SeedManager],
+  seeder: {
+    pathTs: './src/seeders',
+  },
 });

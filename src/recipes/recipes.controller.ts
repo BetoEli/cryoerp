@@ -25,20 +25,20 @@ export class RecipesController {
     return this.recipesService.findAll();
   }
 
-  @Get('available')
-  findAvailable() {
-    return this.recipesService.findAvailable();
-  }
+  // @Get('available')
+  // findAvailable() {
+  //   return this.recipesService.findAvailable();
+  // }
 
-  @Get(':id/availability')
-  checkAvailability(@Param('id') id: string) {
-    return this.recipesService.checkAvailability(+id);
-  }
+  // @Get(':id/availability')
+  // checkAvailability(@Param('id') id: string) {
+  //   return this.recipesService.checkAvailability(+id);
+  // }
 
-  @Get(':id/shopping-list')
-  getShoppingList(@Param('id') id: string) {
-    return this.recipesService.getShoppingList(+id);
-  }
+  // @Get(':id/shopping-list')
+  // getShoppingList(@Param('id') id: string) {
+  //   return this.recipesService.getShoppingList(+id);
+  // }
 
   @Get(':id')
   findOne(@Param('id') id: string) {

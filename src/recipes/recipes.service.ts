@@ -1,21 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { raw, wrap } from '@mikro-orm/core';
+import { wrap } from '@mikro-orm/core';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Recipe } from './entities/recipe.entity';
 import { Ingredient } from '../ingredients/entities/ingredient.entity';
 import { RecipeIngredient } from './entities/recipe-ingredient.entity';
-import { InventoryItem } from '../inventory/entities/inventory.entity';
-
-export interface AvailableRecipe {
-  id: number;
-  name: string;
-  servings: number;
-  prepTime: number;
-  cookTime: number;
-  ingredientCount: number;
-}
 
 @Injectable()
 export class RecipesService {
@@ -55,9 +45,9 @@ export class RecipesService {
       recipe.recipeIngredients.add(recipeIngredient);
     }
 
-    await this.em.persistAndFlush(recipe);
+    await this.em.persist(recipe).flush();
 
-    return this.findOne(recipe.id);
+    return recipe;
   }
 
   async findAll() {
@@ -139,110 +129,8 @@ export class RecipesService {
     return recipe;
   }
 
-  async findAvailable(): Promise<AvailableRecipe[]> {
-    return this.em
-      .createQueryBuilder(Recipe, 'r')
-      .select([
-        'r.id',
-        'r.name',
-        'r.servings',
-        raw('r.prep_time as "prepTime"'),
-        raw('r.cook_time as "cookTime"'),
-      ])
-      .addSelect(raw('count(ri.id) as "ingredientCount"'))
-      .join('r.recipeIngredients', 'ri')
-      .groupBy('r.id')
-      .having(
-        raw(`count(ri.id) = sum(case when coalesce((
-          select sum(ii.quantity) from inventory_item ii
-          where ii.ingredient_id = ri.ingredient_id
-        ), 0) >= ri.quantity then 1 else 0 end)`),
-      )
-      .execute() as Promise<AvailableRecipe[]>;
-  }
-
-  private async calculateIngredientAvailability(id: number) {
-    const recipe = await this.findOne(id);
-
-    const ingredientIds = recipe.recipeIngredients
-      .getItems()
-      .map((ri: RecipeIngredient) => ri.ingredient.id);
-
-    const inventoryItems = await this.em.find(InventoryItem, {
-      ingredient: { $in: ingredientIds },
-    });
-
-    const availableMap = new Map<number, number>();
-    for (const item of inventoryItems) {
-      const ingId = item.ingredient.id;
-      const current = availableMap.get(ingId) ?? 0;
-      availableMap.set(ingId, current + item.quantity);
-    }
-
-    return { recipe, availableMap };
-  }
-
-  async checkAvailability(id: number) {
-    const { recipe, availableMap } =
-      await this.calculateIngredientAvailability(id);
-
-    const ingredients = recipe.recipeIngredients
-      .getItems()
-      .map((ri: RecipeIngredient) => {
-        const available = availableMap.get(ri.ingredient.id) ?? 0;
-        return {
-          ingredientId: ri.ingredient.id,
-          ingredientName: ri.ingredient.name,
-          required: ri.quantity,
-          requiredUnit: ri.unit,
-          available,
-          sufficient: available >= ri.quantity,
-        };
-      });
-
-    return {
-      recipeId: recipe.id,
-      recipeName: recipe.name,
-      ingredients,
-      canMake: ingredients.every((i) => i.sufficient),
-    };
-  }
-
-  async getShoppingList(id: number) {
-    const { recipe, availableMap } =
-      await this.calculateIngredientAvailability(id);
-
-    const items = recipe.recipeIngredients
-      .getItems()
-      .filter((ri: RecipeIngredient) => {
-        const available = availableMap.get(ri.ingredient.id) ?? 0;
-        return available < ri.quantity;
-      })
-      .map((ri: RecipeIngredient) => {
-        const available = availableMap.get(ri.ingredient.id) ?? 0;
-        return {
-          ingredientId: ri.ingredient.id,
-          ingredientName: ri.ingredient.name,
-          required: ri.quantity,
-          available,
-          needed: ri.quantity - available,
-          unit: ri.unit,
-        };
-      });
-
-    return {
-      recipeId: recipe.id,
-      recipeName: recipe.name,
-      items,
-    };
-  }
-
   async remove(id: number) {
-    const recipe = await this.em.findOne(
-      Recipe,
-      { id },
-      { populate: ['recipeIngredients'] },
-    );
+    const recipe = await this.em.findOne(Recipe, { id }, { populate: ['recipeIngredients'] });
 
     if (!recipe) {
       throw new NotFoundException(`Recipe with id ${id} not found`);

@@ -40,6 +40,7 @@ export class Recipe {
   @OneToMany(() => RecipeIngredient, (ri) => ri.recipe, {
     cascade: [Cascade.ALL],
     orphanRemoval: true,
+    serializedName: 'ingredients',
   })
   recipeIngredients = new Collection<RecipeIngredient>(this);
 }
