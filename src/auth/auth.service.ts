@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
+import { User } from 'src/user/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -28,7 +29,7 @@ export class AuthService {
     }
   }
 
-  login(user: { email: string; id: number; role: string }) {
+  login(user: User) {
     const payload = { email: user.email, sub: user.id, role: user.role };
     return {
       access_token: this.jwtService.sign(payload),
