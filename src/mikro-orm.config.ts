@@ -13,8 +13,8 @@ export default defineConfig({
       statement_timeout: 5000,
     },
   },
-  entities: ['./dist/**/*.entity.js', './user/user.entity.js'],
-  entitiesTs: ['./src/**/*.entity.ts', './src/User/user.entity.ts'],
+  entities: ['./dist/**/*.entity.js'],
+  entitiesTs: ['./src/**/*.entity.ts'],
   debug: true,
   extensions: [SeedManager],
   seeder: {

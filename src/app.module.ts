@@ -11,11 +11,10 @@ import { InventoryModule } from './inventory/inventory.module';
 import mikroOrmConfig from './mikro-orm.config';
 import { QueryPerformanceInterceptor } from './common/interceptors/query-performance.interceptor';
 import { RecipesModule } from './recipes/recipes.module';
-import { ApiKeyGuard } from './common/guards/api-key.guard';
 import { ScheduleModule } from '@nestjs/schedule';
 import { UserModule } from './user/user.module';
-import { UseService } from './use/use.service';
 import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -35,13 +34,12 @@ import { AuthModule } from './auth/auth.module';
     AppService,
     {
       provide: APP_GUARD,
-      useClass: ApiKeyGuard,
+      useClass: JwtAuthGuard,
     },
     {
       provide: APP_INTERCEPTOR,
       useClass: QueryPerformanceInterceptor,
     },
-    UseService,
   ],
 })
 export class AppModule {}

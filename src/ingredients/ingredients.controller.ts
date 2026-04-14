@@ -12,6 +12,7 @@ import { IngredientsService } from './ingredients.service';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { IngredientQueryDto } from './dto/ingredient-query.dto';
 import { UpdateIngredientDto } from './dto/update-ingredient.dto';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller('ingredients')
 export class IngredientsController {
@@ -22,11 +23,13 @@ export class IngredientsController {
     return this.ingredientsService.create(createIngredientDto);
   }
 
+  @Public()
   @Get()
   findAll(@Query() query: IngredientQueryDto) {
     return this.ingredientsService.findAll(query);
   }
 
+  @Public()
   @Get('barcode/:code')
   findByBarcode(@Param('code') code: string) {
     return this.ingredientsService.findByBarcode(code);
