@@ -11,7 +11,7 @@ import { RecipeIngredient } from './entities/recipe-ingredient.entity';
 export class RecipesService {
   constructor(private readonly em: EntityManager) {}
 
-  async create(createRecipeDto: CreateRecipeDto) {
+  async create(createRecipeDto: CreateRecipeDto, userId: number) {
     const date = new Date();
     const recipe = this.em.create(Recipe, {
       name: createRecipeDto.name,
@@ -20,6 +20,7 @@ export class RecipesService {
       servings: createRecipeDto.servings,
       prepTime: createRecipeDto.prepTime,
       cookTime: createRecipeDto.cookTime,
+      user: userId,
       createdAt: date,
       updatedAt: date,
     });
@@ -50,20 +51,20 @@ export class RecipesService {
     return recipe;
   }
 
-  async findAll() {
+  async findAll(userId: number) {
     return this.em.find(
       Recipe,
-      {},
+      { user: userId },
       {
         populate: ['recipeIngredients', 'recipeIngredients.ingredient'],
       },
     );
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, userId: number) {
     const recipe = await this.em.findOne(
       Recipe,
-      { id },
+      { id, user: userId },
       {
         populate: ['recipeIngredients', 'recipeIngredients.ingredient'],
       },
@@ -76,10 +77,10 @@ export class RecipesService {
     return recipe;
   }
 
-  async update(id: number, dto: UpdateRecipeDto) {
+  async update(id: number, dto: UpdateRecipeDto, userId: number) {
     const recipe = await this.em.findOne(
       Recipe,
-      { id },
+      { id, user: userId },
       { populate: ['recipeIngredients'] },
     );
 
@@ -129,8 +130,12 @@ export class RecipesService {
     return recipe;
   }
 
-  async remove(id: number) {
-    const recipe = await this.em.findOne(Recipe, { id }, { populate: ['recipeIngredients'] });
+  async remove(id: number, userId: number) {
+    const recipe = await this.em.findOne(
+      Recipe,
+      { id, user: userId },
+      { populate: ['recipeIngredients'] },
+    );
 
     if (!recipe) {
       throw new NotFoundException(`Recipe with id ${id} not found`);

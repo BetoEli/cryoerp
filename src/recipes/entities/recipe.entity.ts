@@ -2,11 +2,13 @@ import {
   Cascade,
   Collection,
   Entity,
+  ManyToOne,
   OneToMany,
   PrimaryKey,
   Property,
 } from '@mikro-orm/core';
 import { RecipeIngredient } from './recipe-ingredient.entity';
+import { User } from '../../user/user.entity';
 
 @Entity()
 export class Recipe {
@@ -36,6 +38,9 @@ export class Recipe {
 
   @Property({ type: 'date', onUpdate: () => new Date() })
   updatedAt: Date;
+
+  @ManyToOne(() => User, { nullable: true })
+  user?: User;
 
   @OneToMany(() => RecipeIngredient, (ri) => ri.recipe, {
     cascade: [Cascade.ALL],

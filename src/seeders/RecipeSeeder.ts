@@ -25,6 +25,8 @@ export class RecipeSeeder extends Seeder<Dictionary> {
     const rice = context.rice as Ingredient;
     const chicken = context.chicken as Ingredient;
 
+    const admin = context.adminUser;
+
     const chickenStirFry = em.create(Recipe, {
       name: 'Chicken Stir Fry',
       description: 'High macro meal with chicken and rice',
@@ -32,6 +34,7 @@ export class RecipeSeeder extends Seeder<Dictionary> {
       servings: 4,
       prepTime: 20,
       cookTime: 15,
+      user: admin,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -62,6 +65,7 @@ export class RecipeSeeder extends Seeder<Dictionary> {
       servings: 8,
       prepTime: 25,
       cookTime: 60,
+      user: admin,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

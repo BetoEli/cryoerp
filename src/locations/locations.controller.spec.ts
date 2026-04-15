@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LocationsController } from './locations.controller';
 import { LocationsService } from './locations.service';
 import { LocationType } from './enums/location-type.enum';
+import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
+import { Role } from 'src/user/role.enum';
 
 describe('LocationsController', () => {
   let controller: LocationsController;
@@ -12,6 +14,8 @@ describe('LocationsController', () => {
     update: jest.fn(),
     remove: jest.fn(),
   };
+
+  const mockUser: JwtPayload = { id: 1, email: 'test@test.com', role: Role.USER };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -42,9 +46,9 @@ describe('LocationsController', () => {
     const created = { id: 1, ...dto };
     mockLocationsService.create.mockResolvedValue(created);
 
-    const result = await controller.create(dto);
+    const result = await controller.create(dto, mockUser);
 
-    expect(mockLocationsService.create).toHaveBeenCalledWith(dto);
+    expect(mockLocationsService.create).toHaveBeenCalledWith(dto, mockUser.id);
     expect(result).toEqual(created);
   });
 
@@ -53,9 +57,9 @@ describe('LocationsController', () => {
     const locations = [{ id: 1, name: 'Garage', type: LocationType.FREEZER }];
     mockLocationsService.findAll.mockResolvedValue(locations);
 
-    const result = await controller.findAll(query);
+    const result = await controller.findAll(query, mockUser);
 
-    expect(mockLocationsService.findAll).toHaveBeenCalledWith(query);
+    expect(mockLocationsService.findAll).toHaveBeenCalledWith(query, mockUser.id);
     expect(result).toEqual(locations);
   });
 
@@ -63,9 +67,9 @@ describe('LocationsController', () => {
     const location = { id: 2, name: 'Pantry', type: LocationType.PANTRY };
     mockLocationsService.findOne.mockResolvedValue(location);
 
-    const result = await controller.findOne('2');
+    const result = await controller.findOne('2', mockUser);
 
-    expect(mockLocationsService.findOne).toHaveBeenCalledWith(2);
+    expect(mockLocationsService.findOne).toHaveBeenCalledWith(2, mockUser.id);
     expect(result).toEqual(location);
   });
 
@@ -78,18 +82,18 @@ describe('LocationsController', () => {
     };
     mockLocationsService.update.mockResolvedValue(updated);
 
-    const result = await controller.update('3', dto);
+    const result = await controller.update('3', dto, mockUser);
 
-    expect(mockLocationsService.update).toHaveBeenCalledWith(3, dto);
+    expect(mockLocationsService.update).toHaveBeenCalledWith(3, dto, mockUser.id);
     expect(result).toEqual(updated);
   });
 
   it('converts id to number, calls service.remove(), and passes through the return value', async () => {
     mockLocationsService.remove.mockResolvedValue(undefined);
 
-    const result = await controller.remove('4');
+    const result = await controller.remove('4', mockUser);
 
-    expect(mockLocationsService.remove).toHaveBeenCalledWith(4);
+    expect(mockLocationsService.remove).toHaveBeenCalledWith(4, mockUser.id);
     expect(result).toBeUndefined();
   });
 });

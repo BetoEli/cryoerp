@@ -19,7 +19,7 @@ export interface LocationSummary {
 export class InventoryService {
   constructor(private readonly em: EntityManager) {}
 
-  async create(createInventoryDto: CreateInventoryItemDto) {
+  async create(createInventoryDto: CreateInventoryItemDto, userId: number) {
     const ingredient = await this.em.findOne(Ingredient, {
       id: createInventoryDto.ingredientId,
     });
@@ -31,6 +31,7 @@ export class InventoryService {
 
     const location = await this.em.findOne(Location, {
       id: createInventoryDto.locationId,
+      user: userId,
     });
     if (!location) {
       throw new NotFoundException(
@@ -56,17 +57,19 @@ export class InventoryService {
       updatedAt: date,
     });
 
-    await this.em.persistAndFlush(inventoryItem);
+    await this.em.persist(inventoryItem).flush();
     return inventoryItem;
   }
 
-  async findAll() {
-    return this.em.findAll(InventoryItem, {
-      populate: ['ingredient', 'location'],
-    });
+  async findAll(userId: number) {
+    return this.em.find(
+      InventoryItem,
+      { location: { user: userId } },
+      { populate: ['ingredient', 'location'] },
+    );
   }
 
-  async findSummary(): Promise<LocationSummary[]> {
+  async findSummary(userId: number): Promise<LocationSummary[]> {
     const results: LocationSummary[] = await this.em
       .createQueryBuilder(InventoryItem, 'i')
       .select([
@@ -79,6 +82,7 @@ export class InventoryService {
         ),
       ])
       .leftJoin('i.location', 'l')
+      .where({ location: { user: userId } })
       .groupBy(['l.id', 'l.name'])
       .orderBy({ 'l.name': 'asc' })
       .execute();
@@ -86,7 +90,7 @@ export class InventoryService {
     return results;
   }
 
-  async findExpiring(days = 7) {
+  async findExpiring(days = 7, userId: number) {
     const now = new Date();
     const cutoff = new Date(now);
     cutoff.setDate(cutoff.getDate() + days);
@@ -96,6 +100,7 @@ export class InventoryService {
         $gte: now,
         $lte: cutoff,
       },
+      location: { user: userId },
     };
 
     const options: FindOptions<InventoryItem, 'ingredient' | 'location'> = {
@@ -108,10 +113,10 @@ export class InventoryService {
     return this.em.find(InventoryItem, where, options);
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, userId: number) {
     const item = await this.em.findOne(
       InventoryItem,
-      { id },
+      { id, location: { user: userId } },
       { populate: ['ingredient', 'location'] },
     );
     if (!item) {
@@ -121,8 +126,8 @@ export class InventoryService {
     return item;
   }
 
-  async update(id: number, updateInventoryDto: UpdateInventoryItemDto) {
-    const item = await this.findOne(id);
+  async update(id: number, updateInventoryDto: UpdateInventoryItemDto, userId: number) {
+    const item = await this.findOne(id, userId);
 
     if (
       updateInventoryDto.ingredientId !== undefined &&
@@ -145,6 +150,7 @@ export class InventoryService {
     ) {
       const location = await this.em.findOne(Location, {
         id: updateInventoryDto.locationId,
+        user: userId,
       });
       if (!location) {
         throw new NotFoundException(
@@ -182,8 +188,8 @@ export class InventoryService {
     return item;
   }
 
-  async remove(id: number) {
-    const item = await this.findOne(id);
-    await this.em.removeAndFlush(item);
+  async remove(id: number, userId: number) {
+    const item = await this.findOne(id, userId);
+    await this.em.remove(item).flush();
   }
 }

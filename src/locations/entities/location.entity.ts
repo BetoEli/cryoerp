@@ -2,12 +2,14 @@ import {
   Collection,
   Entity,
   Enum,
+  ManyToOne,
   OneToMany,
   PrimaryKey,
   Property,
 } from '@mikro-orm/core';
 import { InventoryItem } from '../../inventory/entities/inventory.entity';
 import { LocationType } from '../enums/location-type.enum';
+import { User } from '../../user/user.entity';
 
 @Entity()
 export class Location {
@@ -22,6 +24,9 @@ export class Location {
 
   @Enum(() => LocationType)
   type!: LocationType;
+
+  @ManyToOne(() => User, { nullable: true })
+  user?: User;
 
   @OneToMany(() => InventoryItem, (item) => item.location)
   inventoryItems = new Collection<InventoryItem>(this);

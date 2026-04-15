@@ -8,9 +8,11 @@ import { InventoryItem } from './entities/inventory.entity';
 
 describe('InventoryService', () => {
   let service: InventoryService;
+  const mockFlush = jest.fn().mockResolvedValue(undefined);
   const mockQb = {
     select: jest.fn().mockReturnThis(),
     leftJoin: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
     groupBy: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
     execute: jest.fn(),
@@ -19,16 +21,20 @@ describe('InventoryService', () => {
   const mockEm = {
     findOne: jest.fn(),
     create: jest.fn(),
-    persistAndFlush: jest.fn(),
-    findAll: jest.fn(),
+    persist: jest.fn().mockReturnValue({ flush: mockFlush }),
+    remove: jest.fn().mockReturnValue({ flush: mockFlush }),
     find: jest.fn(),
     flush: jest.fn(),
     removeAndFlush: jest.fn(),
     createQueryBuilder: jest.fn().mockReturnValue(mockQb),
   };
 
+  const USER_ID = 1;
+
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockEm.persist.mockReturnValue({ flush: mockFlush });
+    mockEm.remove.mockReturnValue({ flush: mockFlush });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -62,7 +68,6 @@ describe('InventoryService', () => {
       .mockResolvedValueOnce(ingredient)
       .mockResolvedValueOnce(location);
     mockEm.create.mockReturnValue(created);
-    mockEm.persistAndFlush.mockResolvedValue(undefined);
 
     const result = await service.create({
       ingredientId: 10,
@@ -70,10 +75,10 @@ describe('InventoryService', () => {
       quantity: 2.5,
       unit: 'lbs',
       expirationDate: '2026-04-24T00:00:00Z',
-    });
+    }, USER_ID);
 
     expect(mockEm.findOne).toHaveBeenNthCalledWith(1, Ingredient, { id: 10 });
-    expect(mockEm.findOne).toHaveBeenNthCalledWith(2, Location, { id: 20 });
+    expect(mockEm.findOne).toHaveBeenNthCalledWith(2, Location, { id: 20, user: USER_ID });
     expect(mockEm.create).toHaveBeenCalledWith(
       InventoryItem,
       expect.objectContaining({
@@ -89,7 +94,8 @@ describe('InventoryService', () => {
     >;
     const createdCall = createCalls[0][1];
     expect(createdCall.expirationDate).toBeInstanceOf(Date);
-    expect(mockEm.persistAndFlush).toHaveBeenCalledWith(created);
+    expect(mockEm.persist).toHaveBeenCalledWith(created);
+    expect(mockFlush).toHaveBeenCalled();
     expect(result).toBe(created);
   });
 
@@ -102,7 +108,7 @@ describe('InventoryService', () => {
         locationId: 20,
         quantity: 2.5,
         unit: 'lbs',
-      }),
+      }, USER_ID),
     ).rejects.toThrow(NotFoundException);
 
     expect(mockEm.findOne).toHaveBeenCalledWith(Ingredient, { id: 404 });
@@ -120,22 +126,24 @@ describe('InventoryService', () => {
         locationId: 999,
         quantity: 2.5,
         unit: 'lbs',
-      }),
+      }, USER_ID),
     ).rejects.toThrow(NotFoundException);
 
     expect(mockEm.findOne).toHaveBeenNthCalledWith(1, Ingredient, { id: 10 });
-    expect(mockEm.findOne).toHaveBeenNthCalledWith(2, Location, { id: 999 });
+    expect(mockEm.findOne).toHaveBeenNthCalledWith(2, Location, { id: 999, user: USER_ID });
   });
 
   it('populates ingredient and location', async () => {
     const rows = [{ id: 1 }, { id: 2 }] as InventoryItem[];
-    mockEm.findAll.mockResolvedValue(rows);
+    mockEm.find.mockResolvedValue(rows);
 
-    const result = await service.findAll();
+    const result = await service.findAll(USER_ID);
 
-    expect(mockEm.findAll).toHaveBeenCalledWith(InventoryItem, {
-      populate: ['ingredient', 'location'],
-    });
+    expect(mockEm.find).toHaveBeenCalledWith(
+      InventoryItem,
+      { location: { user: USER_ID } },
+      { populate: ['ingredient', 'location'] },
+    );
     expect(result).toEqual(rows);
   });
 
@@ -159,9 +167,10 @@ describe('InventoryService', () => {
 
     mockQb.execute.mockResolvedValue(expected);
 
-    const result = await service.findSummary();
+    const result = await service.findSummary(USER_ID);
 
     expect(mockEm.createQueryBuilder).toHaveBeenCalled();
+    expect(mockQb.where).toHaveBeenCalledWith({ location: { user: USER_ID } });
     expect(mockQb.execute).toHaveBeenCalled();
     expect(result).toEqual(expected);
   });
@@ -170,12 +179,12 @@ describe('InventoryService', () => {
     const rows = [{ id: 1 }] as InventoryItem[];
     mockEm.find.mockResolvedValue(rows);
 
-    const result = await service.findExpiring();
+    const result = await service.findExpiring(7, USER_ID);
 
     const findCalls = mockEm.find.mock.calls as Array<
       [
         typeof InventoryItem,
-        { expirationDate: { $gte: Date; $lte: Date } },
+        { expirationDate: { $gte: Date; $lte: Date }; location: { user: number } },
         { populate: string[]; orderBy: { expirationDate: 'asc' } },
       ]
     >;
@@ -184,6 +193,7 @@ describe('InventoryService', () => {
     expect(entity).toBe(InventoryItem);
     expect(filter.expirationDate.$gte).toBeInstanceOf(Date);
     expect(filter.expirationDate.$lte).toBeInstanceOf(Date);
+    expect(filter.location).toEqual({ user: USER_ID });
     expect(options).toEqual({
       populate: ['ingredient', 'location'],
       orderBy: { expirationDate: 'asc' },
@@ -215,10 +225,10 @@ describe('InventoryService', () => {
       locationId: 11,
       quantity: 9,
       unit: 'lbs',
-    });
+    }, USER_ID);
 
     expect(mockEm.findOne).toHaveBeenNthCalledWith(1, Ingredient, { id: 2 });
-    expect(mockEm.findOne).toHaveBeenNthCalledWith(2, Location, { id: 11 });
+    expect(mockEm.findOne).toHaveBeenNthCalledWith(2, Location, { id: 11, user: USER_ID });
     expect(item.ingredient).toBe(newIngredient);
     expect(item.location).toBe(newLocation);
     expect(item.quantity).toBe(9);
@@ -230,11 +240,11 @@ describe('InventoryService', () => {
   it('finds and removes the entity', async () => {
     const item = { id: 55 } as InventoryItem;
     const findOneSpy = jest.spyOn(service, 'findOne').mockResolvedValue(item);
-    mockEm.removeAndFlush.mockResolvedValue(undefined);
 
-    await service.remove(55);
+    await service.remove(55, USER_ID);
 
-    expect(findOneSpy).toHaveBeenCalledWith(55);
-    expect(mockEm.removeAndFlush).toHaveBeenCalledWith(item);
+    expect(findOneSpy).toHaveBeenCalledWith(55, USER_ID);
+    expect(mockEm.remove).toHaveBeenCalledWith(item);
+    expect(mockFlush).toHaveBeenCalled();
   });
 });

@@ -7,19 +7,22 @@ import { Ingredient } from './entities/ingredient.entity';
 
 describe('IngredientsService', () => {
   let service: IngredientsService;
+  const mockFlush = jest.fn().mockResolvedValue(undefined);
   const mockEm = {
     find: jest.fn(),
     findOne: jest.fn(),
     findOneOrFail: jest.fn(),
     count: jest.fn(),
     create: jest.fn(),
-    persistAndFlush: jest.fn(),
-    removeAndFlush: jest.fn(),
+    persist: jest.fn().mockReturnValue({ flush: mockFlush }),
+    remove: jest.fn().mockReturnValue({ flush: mockFlush }),
     flush: jest.fn(),
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockEm.persist.mockReturnValue({ flush: mockFlush });
+    mockEm.remove.mockReturnValue({ flush: mockFlush });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -52,7 +55,6 @@ describe('IngredientsService', () => {
     } as Ingredient;
 
     mockEm.create.mockReturnValue(entity);
-    mockEm.persistAndFlush.mockResolvedValue(undefined);
 
     const result = await service.create(dto);
 
@@ -65,7 +67,8 @@ describe('IngredientsService', () => {
         barcode: dto.barcode,
       }),
     );
-    expect(mockEm.persistAndFlush).toHaveBeenCalledWith(entity);
+    expect(mockEm.persist).toHaveBeenCalledWith(entity);
+    expect(mockFlush).toHaveBeenCalled();
     expect(result).toBe(entity);
   });
 
@@ -126,12 +129,12 @@ describe('IngredientsService', () => {
     } as Ingredient;
     mockEm.findOne.mockResolvedValue(ingredient);
     mockEm.count.mockResolvedValueOnce(0).mockResolvedValueOnce(0);
-    mockEm.removeAndFlush.mockResolvedValue(undefined);
 
     await service.remove(2);
 
     expect(mockEm.findOne).toHaveBeenCalledWith(Ingredient, { id: 2 });
-    expect(mockEm.removeAndFlush).toHaveBeenCalledWith(ingredient);
+    expect(mockEm.remove).toHaveBeenCalledWith(ingredient);
+    expect(mockFlush).toHaveBeenCalled();
   });
 
   it('throws ConflictException when inventory items still depend on the ingredient', async () => {
@@ -146,7 +149,7 @@ describe('IngredientsService', () => {
     mockEm.count.mockResolvedValue(1);
 
     await expect(service.remove(2)).rejects.toThrow(ConflictException);
-    expect(mockEm.removeAndFlush).not.toHaveBeenCalled();
+    expect(mockEm.remove).not.toHaveBeenCalled();
   });
 
   it('throws ConflictException when recipes still depend on the ingredient', async () => {
@@ -161,6 +164,6 @@ describe('IngredientsService', () => {
     mockEm.count.mockResolvedValueOnce(0).mockResolvedValueOnce(1);
 
     await expect(service.remove(2)).rejects.toThrow(ConflictException);
-    expect(mockEm.removeAndFlush).not.toHaveBeenCalled();
+    expect(mockEm.remove).not.toHaveBeenCalled();
   });
 });

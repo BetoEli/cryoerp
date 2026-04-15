@@ -7,19 +7,24 @@ import { Location } from './entities/location.entity';
 
 describe('LocationsService', () => {
   let service: LocationsService;
+  const mockFlush = jest.fn().mockResolvedValue(undefined);
   const mockEm = {
     find: jest.fn(),
     findOne: jest.fn(),
     findOneOrFail: jest.fn(),
     count: jest.fn(),
     create: jest.fn(),
-    persistAndFlush: jest.fn(),
-    removeAndFlush: jest.fn(),
+    persist: jest.fn().mockReturnValue({ flush: mockFlush }),
+    remove: jest.fn().mockReturnValue({ flush: mockFlush }),
     flush: jest.fn(),
   };
 
+  const USER_ID = 1;
+
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockEm.persist.mockReturnValue({ flush: mockFlush });
+    mockEm.remove.mockReturnValue({ flush: mockFlush });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -35,7 +40,7 @@ describe('LocationsService', () => {
     expect(service).toBeDefined();
   });
 
-  it('calls em.persistAndFlush() and returns the entity', async () => {
+  it('calls em.persist().flush() and returns the entity', async () => {
     const dto = {
       name: 'Kitchen',
       type: LocationType.FRIDGE,
@@ -48,9 +53,8 @@ describe('LocationsService', () => {
     } as Location;
 
     mockEm.create.mockReturnValue(entity);
-    mockEm.persistAndFlush.mockResolvedValue(undefined);
 
-    const result = await service.create(dto);
+    const result = await service.create(dto, USER_ID);
 
     expect(mockEm.create).toHaveBeenCalledWith(
       Location,
@@ -58,9 +62,11 @@ describe('LocationsService', () => {
         name: dto.name,
         type: dto.type,
         description: dto.description,
+        user: USER_ID,
       }),
     );
-    expect(mockEm.persistAndFlush).toHaveBeenCalledWith(entity);
+    expect(mockEm.persist).toHaveBeenCalledWith(entity);
+    expect(mockFlush).toHaveBeenCalled();
     expect(result).toBe(entity);
   });
 
@@ -71,9 +77,9 @@ describe('LocationsService', () => {
     ];
     mockEm.find.mockResolvedValue(locations);
 
-    const result = await service.findAll();
+    const result = await service.findAll({}, USER_ID);
 
-    expect(mockEm.find).toHaveBeenCalledWith(Location, {});
+    expect(mockEm.find).toHaveBeenCalledWith(Location, { user: USER_ID });
     expect(result).toEqual(locations);
   });
 
@@ -81,10 +87,11 @@ describe('LocationsService', () => {
     const filtered = [{ id: 1, name: 'Garage', type: LocationType.FREEZER }];
     mockEm.find.mockResolvedValue(filtered);
 
-    const result = await service.findAll({ type: LocationType.FREEZER });
+    const result = await service.findAll({ type: LocationType.FREEZER }, USER_ID);
 
     expect(mockEm.find).toHaveBeenCalledWith(Location, {
       type: LocationType.FREEZER,
+      user: USER_ID,
     });
     expect(result).toEqual(filtered);
   });
@@ -92,10 +99,10 @@ describe('LocationsService', () => {
   it('throws NotFoundException when the location does not exist', async () => {
     mockEm.findOneOrFail.mockRejectedValue(new Error('not found'));
 
-    await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+    await expect(service.findOne(999, USER_ID)).rejects.toThrow(NotFoundException);
     expect(mockEm.findOneOrFail).toHaveBeenCalledWith(
       Location,
-      { id: 999 },
+      { id: 999, user: USER_ID },
       { populate: ['inventoryItems', 'inventoryItems.ingredient'] },
     );
   });
@@ -112,7 +119,7 @@ describe('LocationsService', () => {
     mockEm.findOneOrFail.mockResolvedValue(location);
     mockEm.flush.mockResolvedValue(undefined);
 
-    const result = await service.update(1, dto);
+    const result = await service.update(1, dto, USER_ID);
 
     expect(location.name).toBe('Kitchen Updated');
     expect(location.description).toBe('new');
@@ -129,16 +136,16 @@ describe('LocationsService', () => {
 
     mockEm.findOneOrFail.mockResolvedValue(location);
     mockEm.count.mockResolvedValue(0);
-    mockEm.removeAndFlush.mockResolvedValue(undefined);
 
-    await service.remove(1);
+    await service.remove(1, USER_ID);
 
     expect(mockEm.findOneOrFail).toHaveBeenCalledWith(
       Location,
-      { id: 1 },
+      { id: 1, user: USER_ID },
       { populate: ['inventoryItems', 'inventoryItems.ingredient'] },
     );
-    expect(mockEm.removeAndFlush).toHaveBeenCalledWith(location);
+    expect(mockEm.remove).toHaveBeenCalledWith(location);
+    expect(mockFlush).toHaveBeenCalled();
   });
 
   it('throws ConflictException when inventory items still camp at this location', async () => {
@@ -151,7 +158,7 @@ describe('LocationsService', () => {
     mockEm.findOneOrFail.mockResolvedValue(location);
     mockEm.count.mockResolvedValue(2);
 
-    await expect(service.remove(1)).rejects.toThrow(ConflictException);
-    expect(mockEm.removeAndFlush).not.toHaveBeenCalled();
+    await expect(service.remove(1, USER_ID)).rejects.toThrow(ConflictException);
+    expect(mockEm.remove).not.toHaveBeenCalled();
   });
 });

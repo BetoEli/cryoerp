@@ -5,21 +5,28 @@ import { NotFoundException } from '@nestjs/common';
 
 describe('RecipesService', () => {
   let service: RecipesService;
+  const mockFlush = jest.fn().mockResolvedValue(undefined);
   let entityManager: {
     create: jest.Mock;
     findOne: jest.Mock;
     find: jest.Mock;
+    persist: jest.Mock;
     persistAndFlush: jest.Mock;
     remove: jest.Mock;
+    flush: jest.Mock;
   };
+
+  const USER_ID = 1;
 
   beforeEach(async () => {
     entityManager = {
       create: jest.fn(),
       findOne: jest.fn(),
       find: jest.fn(),
+      persist: jest.fn().mockReturnValue({ flush: mockFlush }),
       persistAndFlush: jest.fn(),
-      remove: jest.fn(),
+      remove: jest.fn().mockReturnValue({ flush: mockFlush }),
+      flush: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -42,11 +49,11 @@ describe('RecipesService', () => {
   it('findAll should populate recipe ingredients and their ingredients', async () => {
     entityManager.find.mockResolvedValue([]);
 
-    await service.findAll();
+    await service.findAll(USER_ID);
 
     expect(entityManager.find).toHaveBeenCalledWith(
       expect.any(Function),
-      {},
+      { user: USER_ID },
       {
         populate: ['recipeIngredients', 'recipeIngredients.ingredient'],
       },
@@ -56,11 +63,11 @@ describe('RecipesService', () => {
   it('findOne should populate recipe ingredients and their ingredients', async () => {
     entityManager.findOne.mockResolvedValue({ id: 1 });
 
-    await service.findOne(1);
+    await service.findOne(1, USER_ID);
 
     expect(entityManager.findOne).toHaveBeenCalledWith(
       expect.any(Function),
-      { id: 1 },
+      { id: 1, user: USER_ID },
       {
         populate: ['recipeIngredients', 'recipeIngredients.ingredient'],
       },
@@ -70,7 +77,7 @@ describe('RecipesService', () => {
   it('findOne should throw when recipe does not exist', async () => {
     entityManager.findOne.mockResolvedValue(null);
 
-    await expect(service.findOne(1)).rejects.toThrow(
+    await expect(service.findOne(1, USER_ID)).rejects.toThrow(
       'Recipe with id 1 not found',
     );
   });
@@ -87,7 +94,6 @@ describe('RecipesService', () => {
     entityManager.create
       .mockReturnValueOnce(mockRecipe)
       .mockReturnValueOnce(mockRecipeIngredient);
-    entityManager.persistAndFlush.mockResolvedValue(undefined);
 
     const dto = {
       name: 'Bread',
@@ -99,7 +105,7 @@ describe('RecipesService', () => {
       ingredients: [{ ingredientId: 1, quantity: 2, unit: 'cups' }],
     };
 
-    const result = await service.create(dto);
+    const result = await service.create(dto, USER_ID);
 
     expect(entityManager.findOne).toHaveBeenCalledWith(expect.any(Function), {
       id: 1,
@@ -107,7 +113,8 @@ describe('RecipesService', () => {
     expect(mockRecipe.recipeIngredients.add).toHaveBeenCalledWith(
       mockRecipeIngredient,
     );
-    expect(entityManager.persistAndFlush).toHaveBeenCalledWith(mockRecipe);
+    expect(entityManager.persist).toHaveBeenCalledWith(mockRecipe);
+    expect(mockFlush).toHaveBeenCalled();
     expect(result).toBe(mockRecipe);
   });
 
@@ -125,20 +132,18 @@ describe('RecipesService', () => {
       ingredients: [{ ingredientId: 99, quantity: 2, unit: 'cups' }],
     };
 
-    await expect(service.create(dto)).rejects.toThrow(NotFoundException);
+    await expect(service.create(dto, USER_ID)).rejects.toThrow(NotFoundException);
   });
 
   it('remove should delete the recipe and cascade its recipe ingredients', async () => {
-    const flush = jest.fn().mockResolvedValue(undefined);
-    entityManager.remove.mockReturnValue({ flush });
     entityManager.findOne.mockResolvedValue({
       id: 1,
       recipeIngredients: { getItems: jest.fn().mockReturnValue([]) },
     });
 
-    await service.remove(1);
+    await service.remove(1, USER_ID);
 
     expect(entityManager.remove).toHaveBeenCalled();
-    expect(flush).toHaveBeenCalled();
+    expect(mockFlush).toHaveBeenCalled();
   });
 });

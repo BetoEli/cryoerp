@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InventoryController } from './inventory.controller';
 import { InventoryService } from './inventory.service';
+import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
+import { Role } from 'src/user/role.enum';
 
 describe('InventoryController', () => {
   let controller: InventoryController;
@@ -24,6 +26,8 @@ describe('InventoryController', () => {
     remove: jest.fn(),
   };
 
+  const mockUser: JwtPayload = { id: 1, email: 'test@test.com', role: Role.USER };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -45,7 +49,7 @@ describe('InventoryController', () => {
     expect(controller).toBeDefined();
   });
 
-  it('calls service.create with the request body', async () => {
+  it('calls service.create with the request body and user id', async () => {
     const dto = {
       ingredientId: 1,
       locationId: 2,
@@ -55,23 +59,23 @@ describe('InventoryController', () => {
     const created = { id: 99, ...dto };
     service.create.mockResolvedValue(created);
 
-    const result = await controller.create(dto);
+    const result = await controller.create(dto, mockUser);
 
-    expect(service.create).toHaveBeenCalledWith(dto);
+    expect(service.create).toHaveBeenCalledWith(dto, mockUser.id);
     expect(result).toEqual(created);
   });
 
-  it('calls service.findAll', async () => {
+  it('calls service.findAll with user id', async () => {
     const rows = [{ id: 1 }, { id: 2 }];
     service.findAll.mockResolvedValue(rows);
 
-    const result = await controller.findAll();
+    const result = await controller.findAll(mockUser);
 
-    expect(service.findAll).toHaveBeenCalled();
+    expect(service.findAll).toHaveBeenCalledWith(mockUser.id);
     expect(result).toEqual(rows);
   });
 
-  it('calls service.findSummary', async () => {
+  it('calls service.findSummary with user id', async () => {
     const rows = [
       {
         locationId: 1,
@@ -83,56 +87,48 @@ describe('InventoryController', () => {
     ];
     service.findSummary.mockResolvedValue(rows);
 
-    const controllerWithSummary = controller as {
-      summary: () => Promise<typeof rows>;
-    };
+    const result = await controller.summary(mockUser);
 
-    const result = await controllerWithSummary.summary();
-
-    expect(service.findSummary).toHaveBeenCalled();
+    expect(service.findSummary).toHaveBeenCalledWith(mockUser.id);
     expect(result).toEqual(rows);
   });
 
-  it('calls service.findExpiring with default days', async () => {
+  it('calls service.findExpiring with days and user id', async () => {
     const rows = [{ id: 1 }];
     service.findExpiring.mockResolvedValue(rows);
 
-    const controllerWithFindExpiring = controller as {
-      findExpiring: (days: number) => Promise<typeof rows>;
-    };
+    const result = await controller.findExpiring(7, mockUser);
 
-    const result = await controllerWithFindExpiring.findExpiring(7);
-
-    expect(service.findExpiring).toHaveBeenCalledWith(7);
+    expect(service.findExpiring).toHaveBeenCalledWith(7, mockUser.id);
     expect(result).toEqual(rows);
   });
 
-  it('parses id and calls service.findOne', async () => {
+  it('parses id and calls service.findOne with user id', async () => {
     const row = { id: 7 };
     service.findOne.mockResolvedValue(row);
 
-    const result = await controller.findOne('7');
+    const result = await controller.findOne('7', mockUser);
 
-    expect(service.findOne).toHaveBeenCalledWith(7);
+    expect(service.findOne).toHaveBeenCalledWith(7, mockUser.id);
     expect(result).toEqual(row);
   });
 
-  it('parses id and calls service.update with dto', async () => {
+  it('parses id and calls service.update with dto and user id', async () => {
     const dto = { quantity: 8 };
     const updated = { id: 7, quantity: 8 };
     service.update.mockResolvedValue(updated);
 
-    const result = await controller.update('7', dto);
+    const result = await controller.update('7', dto, mockUser);
 
-    expect(service.update).toHaveBeenCalledWith(7, dto);
+    expect(service.update).toHaveBeenCalledWith(7, dto, mockUser.id);
     expect(result).toEqual(updated);
   });
 
-  it('parses id and calls service.remove', async () => {
+  it('parses id and calls service.remove with user id', async () => {
     service.remove.mockResolvedValue(undefined);
 
-    await controller.remove('7');
+    await controller.remove('7', mockUser);
 
-    expect(service.remove).toHaveBeenCalledWith(7);
+    expect(service.remove).toHaveBeenCalledWith(7, mockUser.id);
   });
 });

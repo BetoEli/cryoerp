@@ -24,7 +24,7 @@ export class IngredientsService {
       updatedAt: date,
     });
 
-    await this.em.persistAndFlush(ingredient);
+    await this.em.persist(ingredient).flush();
     return ingredient;
   }
 
@@ -84,6 +84,6 @@ export class IngredientsService {
       );
     }
 
-    await this.em.removeAndFlush(ingredient);
+    await this.em.remove(ingredient).flush();
   }
 }

@@ -15,28 +15,29 @@ export class LocationsService {
   date = new Date();
   constructor(private readonly em: EntityManager) {}
 
-  async create(createLocationDto: CreateLocationDto) {
+  async create(createLocationDto: CreateLocationDto, userId: number) {
     const location = this.em.create(Location, {
       ...createLocationDto,
+      user: userId,
       createdAt: this.date,
       updatedAt: this.date,
     });
-    await this.em.persistAndFlush(location);
+    await this.em.persist(location).flush();
     return location;
   }
 
-  async findAll(query?: LocationQueryDto) {
-    const filter: FilterQuery<Location> = query?.type
-      ? { type: query.type }
-      : {};
+  async findAll(query?: LocationQueryDto, userId?: number) {
+    const filter: FilterQuery<Location> = {};
+    if (query?.type) filter.type = query.type;
+    if (userId !== undefined) filter.user = userId;
     return this.em.find(Location, filter);
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, userId: number) {
     try {
       return await this.em.findOneOrFail(
         Location,
-        { id },
+        { id, user: userId },
         {
           populate: ['inventoryItems', 'inventoryItems.ingredient'],
         },
@@ -46,15 +47,15 @@ export class LocationsService {
     }
   }
 
-  async update(id: number, updateLocationDto: UpdateLocationDto) {
-    const location = await this.findOne(id);
+  async update(id: number, updateLocationDto: UpdateLocationDto, userId: number) {
+    const location = await this.findOne(id, userId);
     Object.assign(location, updateLocationDto);
     await this.em.flush();
     return location;
   }
 
-  async remove(id: number) {
-    const location = await this.findOne(id);
+  async remove(id: number, userId: number) {
+    const location = await this.findOne(id, userId);
 
     const inventoryCount = await this.em.count(InventoryItem, {
       location: { id },
@@ -65,6 +66,6 @@ export class LocationsService {
       );
     }
 
-    await this.em.removeAndFlush(location);
+    await this.em.remove(location).flush();
   }
 }
