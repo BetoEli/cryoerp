@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { User } from 'src/user/user.entity';
 import { UserService } from 'src/user/user.service';
@@ -7,6 +7,7 @@ import { Public } from 'src/common/decorators/public.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { generateCsrfToken } from 'src/csrf.config';
 
 @Controller('auth')
 export class AuthController {
@@ -23,21 +24,35 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  async login(@Body() dto: LoginDto) {
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const validatedUser = await this.authService.validateUser(
       dto.email,
       dto.password,
     );
+
     if (!validatedUser) {
-      throw new Error('Invalid credentials');
+      throw new UnauthorizedException('Invalid email or password');
     }
-    return this.authService.login(validatedUser);
+
+    const { access_token } = this.authService.login(validatedUser);
+    res.cookie('access_token', access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 60 * 1000,
+      path: '/',
+    });
+    return { message: 'Login successful' };
   }
 
   @Public()
   @Get('csrf-token')
-  getCsrfToken(@Req() req: Request) {
-    return { csrfToken: (req as any).csrfToken?.() ?? '' };
+  getCsrfToken(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const token = generateCsrfToken(req as any, res as any);
+    return { token };
   }
 
   @Get('profile')
@@ -46,8 +61,13 @@ export class AuthController {
   }
 
   @Post('logout')
-  logout(@Res() res: Response) {
-    res.clearCookie('access_token');
-    return res.json({ message: 'Logged out' });
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('access_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    });
+    return { message: 'Logged out' };
   }
 }

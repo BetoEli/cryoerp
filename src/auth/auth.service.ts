@@ -23,7 +23,6 @@ export class AuthService {
       }
     }
     if (!user) {
-      // dummy verification to prevent timing attacks
       await argon2.verify(dummyHash, password);
       throw new UnauthorizedException('User not found');
     }

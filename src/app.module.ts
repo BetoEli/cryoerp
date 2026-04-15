@@ -1,5 +1,6 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { doubleCsrfProtection } from './csrf.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
@@ -15,6 +16,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { RolesGuard } from './common/guards/roles.guard';
 
 @Module({
   imports: [
@@ -37,9 +39,20 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
       useClass: JwtAuthGuard,
     },
     {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+    {
       provide: APP_INTERCEPTOR,
       useClass: QueryPerformanceInterceptor,
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(doubleCsrfProtection)
+      .exclude('api/auth/login', 'api/auth/register', 'api/auth/csrf-token')
+      .forRoutes('*');
+  }
+}

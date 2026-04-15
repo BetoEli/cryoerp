@@ -13,6 +13,8 @@ import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { IngredientQueryDto } from './dto/ingredient-query.dto';
 import { UpdateIngredientDto } from './dto/update-ingredient.dto';
 import { Public } from 'src/common/decorators/public.decorator';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { Role } from 'src/user/role.enum';
 
 @Controller('ingredients')
 export class IngredientsController {
@@ -49,6 +51,7 @@ export class IngredientsController {
     return this.ingredientsService.update(+id, updateIngredientDto);
   }
 
+  @Roles(Role.ADMIN)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.ingredientsService.remove(+id);
