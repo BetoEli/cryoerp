@@ -12,9 +12,9 @@ import { IngredientsService } from './ingredients.service';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { IngredientQueryDto } from './dto/ingredient-query.dto';
 import { UpdateIngredientDto } from './dto/update-ingredient.dto';
-import { Public } from 'src/common/decorators/public.decorator';
-import { Roles } from 'src/common/decorators/roles.decorator';
-import { Role } from 'src/user/role.enum';
+import { Public } from '../common/decorators/public.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../user/role.enum';
 
 @Controller('ingredients')
 export class IngredientsController {

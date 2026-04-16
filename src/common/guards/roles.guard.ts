@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
-import { Role } from 'src/user/role.enum';
+import type { Role } from '../../user/role.enum';
 // 3C)JwtAuthGuard must run first because it is responsible for verifying the JWT and populating request.user. The RolesGuard then reads request.user.role to 
   // check permissions.                                                                                                                                              
   // If the order were reversed, RolesGuard would run before request.user exists. user?.role would be undefined, which is not included in any requiredRoles  

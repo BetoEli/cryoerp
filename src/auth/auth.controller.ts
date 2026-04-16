@@ -1,13 +1,13 @@
 import { Body, Controller, Get, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { User } from 'src/user/user.entity';
-import { UserService } from 'src/user/user.service';
+import { User } from '../user/user.entity';
+import { UserService } from '../user/user.service';
 import { AuthService } from './auth.service';
-import { Public } from 'src/common/decorators/public.decorator';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { Public } from '../common/decorators/public.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { generateCsrfToken } from 'src/csrf.config';
+import { generateCsrfToken } from '../csrf.config';
 
 @Controller('auth')
 export class AuthController {

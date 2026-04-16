@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InventoryController } from './inventory.controller';
 import { InventoryService } from './inventory.service';
-import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
-import { Role } from 'src/user/role.enum';
+import type { JwtPayload } from '../common/interfaces/jwt-payload.interface';
+import { Role } from '../user/role.enum';
 
 describe('InventoryController', () => {
   let controller: InventoryController;

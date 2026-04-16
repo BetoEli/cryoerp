@@ -2,8 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LocationsController } from './locations.controller';
 import { LocationsService } from './locations.service';
 import { LocationType } from './enums/location-type.enum';
-import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
-import { Role } from 'src/user/role.enum';
+import type { JwtPayload } from '../common/interfaces/jwt-payload.interface';
+import { Role } from '../user/role.enum';
 
 describe('LocationsController', () => {
   let controller: LocationsController;
