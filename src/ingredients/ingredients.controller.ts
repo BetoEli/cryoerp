@@ -37,6 +37,7 @@ export class IngredientsController {
     return this.ingredientsService.findByBarcode(code);
   }
 
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.ingredientsService.findOne(+id);

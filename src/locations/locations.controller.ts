@@ -12,8 +12,8 @@ import { LocationsService } from './locations.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { LocationQueryDto } from './dto/location-query.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { JwtPayload } from 'src/common/interfaces/jwt-payload.interface';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { JwtPayload } from '../common/interfaces/jwt-payload.interface';
 
 @Controller('locations')
 export class LocationsController {
