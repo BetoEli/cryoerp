@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -26,6 +27,26 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
+  const config = new DocumentBuilder()
+    .setTitle('CryoERP API')
+    .setDescription('Home grocery inventory and tracking system')
+    .setVersion('1.0')
+    .addCookieAuth('access_token')
+    .addApiKey(
+      {
+        type: 'apiKey',
+        name: 'X-api-key',
+        in: 'header',
+      },
+      'api-key',
+    )
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, document, {
+    jsonDocumentUrl:
+      process.env.NODE_ENV === 'develop' ? '/api-json' : undefined,
+  });
   await app.listen(4000);
 }
 void bootstrap();

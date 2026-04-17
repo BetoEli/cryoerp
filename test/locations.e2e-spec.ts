@@ -6,15 +6,42 @@ import { App } from 'supertest/types';
 import helmet from 'helmet';
 import { AppModule } from '../src/app.module';
 import { LocationType } from '../src/locations/enums/location-type.enum';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-type LocationResponse = {
+export class LocationResponseDto {
+  @ApiProperty({
+    description: 'The unique identifier',
+    example: 1,
+  })
   id: number;
+
+  @ApiProperty({
+    description: 'The display name',
+    example: 'Main Pantry',
+  })
   name: string;
+
+  @ApiPropertyOptional({
+    description: 'An optional description',
+  })
   description?: string;
+
+  @ApiProperty({
+    description: 'The type of storage location',
+    enum: LocationType,
+  })
   type: LocationType;
-  createdAt: string;
-  updatedAt?: string;
-};
+
+  @ApiProperty({
+    description: 'When the location was created',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'When the location was last updated',
+  })
+  updatedAt?: Date;
+}
 
 describe('Locations (e2e)', () => {
   let app: INestApplication<App>;
@@ -70,7 +97,7 @@ describe('Locations (e2e)', () => {
       .send(payload)
       .expect(201);
 
-    const body = response.body as LocationResponse;
+    const body = response.body as LocationResponseDto;
 
     expect(body.id).toEqual(expect.any(Number));
     expect(body.name).toBe(payload.name);
@@ -109,7 +136,7 @@ describe('Locations (e2e)', () => {
       })
       .expect(201);
 
-    const body = response.body as LocationResponse;
+    const body = response.body as LocationResponseDto;
 
     expect(body.id).toEqual(expect.any(Number));
     expect(body.description).toHaveLength(500);
@@ -122,7 +149,7 @@ describe('Locations (e2e)', () => {
       .set('X-API-Key', 'test-api-key')
       .expect(200);
 
-    const body = response.body as LocationResponse[];
+    const body = response.body as LocationResponseDto[];
 
     expect(Array.isArray(body)).toBe(true);
     expect(body).toEqual(
@@ -142,7 +169,7 @@ describe('Locations (e2e)', () => {
       .set('X-API-Key', 'test-api-key')
       .expect(200);
 
-    const body = response.body as LocationResponse;
+    const body = response.body as LocationResponseDto;
 
     expect(body.id).toBe(createdLocationId);
     expect(body.name).toBe('Kitchen');
@@ -156,7 +183,7 @@ describe('Locations (e2e)', () => {
       .send({ description: 'Updated description' })
       .expect(200);
 
-    const body = response.body as LocationResponse;
+    const body = response.body as LocationResponseDto;
 
     expect(body.id).toBe(createdLocationId);
     expect(body.description).toBe('Updated description');
