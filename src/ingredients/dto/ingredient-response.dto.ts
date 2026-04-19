@@ -1,26 +1,17 @@
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Matches,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IngredientCategory } from '../../locations/enums/ingredient-category.enum';
 
-export class CreateIngredientDto {
+export class IngredientResponseDto {
+  @ApiProperty({
+    description: 'Unique identifier of the ingredient',
+    example: 42,
+  })
+  id: number;
+
   @ApiProperty({
     description: 'Name of the ingredient',
     example: 'Chicken Breast',
-    minLength: 2,
-    maxLength: 100,
   })
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(2)
-  @MaxLength(100)
   name: string;
 
   @ApiProperty({
@@ -28,28 +19,29 @@ export class CreateIngredientDto {
     enum: IngredientCategory,
     example: IngredientCategory.PROTEIN,
   })
-  @IsEnum(IngredientCategory)
-  @IsNotEmpty()
   category: IngredientCategory;
 
   @ApiProperty({
     description: 'Default unit of measurement for this ingredient',
     example: 'oz',
-    minLength: 1,
-    maxLength: 20,
   })
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(1)
-  @MaxLength(20)
   defaultUnit: string;
 
   @ApiPropertyOptional({
-    description: 'Barcode associated with the ingredient packaging (8–14 digits)',
-    example: '0123456789012',
+    description: 'Barcode associated with the ingredient packaging',
+    example: '0123456789',
   })
-  @IsOptional()
-  @IsString()
-  @Matches(/^\d{8,14}$/)
   barcode?: string;
+
+  @ApiProperty({
+    description: 'Timestamp when the ingredient was created',
+    example: new Date().toISOString(),
+  })
+  createdAt: Date;
+
+  @ApiPropertyOptional({
+    description: 'Timestamp when the ingredient was last updated',
+    example: new Date().toISOString(),
+  })
+  updatedAt?: Date;
 }

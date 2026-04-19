@@ -1,25 +1,17 @@
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { LocationType } from '../enums/location-type.enum';
 
-export class CreateLocationDto {
+export class LocationResponseDto {
+  @ApiProperty({
+    description: 'Unique identifier of the location',
+    example: 1,
+  })
+  id: number;
+
   @ApiProperty({
     description: 'Display name of the location',
     example: 'Main Fridge',
-    minLength: 2,
-    maxLength: 50,
   })
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(2)
-  @MaxLength(50)
   name: string;
 
   @ApiProperty({
@@ -27,17 +19,23 @@ export class CreateLocationDto {
     enum: LocationType,
     example: LocationType.FRIDGE,
   })
-  @IsEnum(LocationType)
-  @IsNotEmpty()
   type: LocationType;
 
   @ApiPropertyOptional({
     description: 'Optional description of the location',
     example: 'Top shelf of the kitchen fridge',
-    maxLength: 500,
   })
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
   description?: string;
+
+  @ApiProperty({
+    description: 'Timestamp when the location was created',
+    example: new Date().toISOString(),
+  })
+  createdAt: Date;
+
+  @ApiPropertyOptional({
+    description: 'Timestamp when the location was last updated',
+    example: new Date().toISOString(),
+  })
+  updatedAt?: Date;
 }

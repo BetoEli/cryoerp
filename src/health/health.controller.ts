@@ -2,16 +2,26 @@ import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { MikroORM } from '@mikro-orm/postgresql';
 import { Public } from '../common/decorators/public.decorator';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { HealthResponseDto } from './dto/health-response.dto';
+import { ErrorResponseDto } from '../common/dto/error-response.dto';
 
 @Controller('health')
 export class HealthController {
   constructor(private readonly orm: MikroORM) {}
 
   @Public()
-  @ApiOperation({ summary: 'Check the health of the application' })
-  @ApiResponse({ status: 200, description: 'ok' })
-  @ApiResponse({ status: 503, description: 'disconnected' })
   @Get()
+  @ApiOperation({ summary: 'Check application and database health' })
+  @ApiResponse({
+    status: 200,
+    description: 'Application is healthy and database is connected.',
+    type: HealthResponseDto,
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'Database is unreachable.',
+    type: ErrorResponseDto,
+  })
   async getHealth() {
     const isDatabaseConnected = await this.orm.isConnected();
     const timestamp = new Date().toISOString();
