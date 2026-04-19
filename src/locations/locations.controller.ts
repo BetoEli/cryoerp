@@ -8,37 +8,26 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
-import {
-  ApiOperation,
-  ApiResponse,
-  ApiBody,
-  ApiParam,
-  ApiCookieAuth,
-} from '@nestjs/swagger';
 import { LocationsService } from './locations.service';
 import { CreateLocationDto } from './dto/create-location.dto';
 import { LocationQueryDto } from './dto/location-query.dto';
 import { UpdateLocationDto } from './dto/update-location.dto';
-import { LocationResponseDto } from './dto/location-response.dto';
-import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/interfaces/jwt-payload.interface';
-
-@ApiCookieAuth('access_token')
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { LocationResponseDto } from 'test/locations.e2e-spec';
 @Controller('locations')
 export class LocationsController {
   constructor(private readonly locationsService: LocationsService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new storage location' })
-  @ApiBody({ type: CreateLocationDto })
+  @ApiOperation({ summary: 'Create a new location' })
   @ApiResponse({
     status: 201,
-    description: 'Location created successfully.',
-    type: LocationResponseDto,
+    description: 'The location has been successfully created.',
   })
-  @ApiResponse({ status: 400, description: 'Validation failed.', type: ErrorResponseDto })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad Request.' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   create(
     @Body() createLocationDto: CreateLocationDto,
     @CurrentUser() user: JwtPayload,
@@ -47,43 +36,38 @@ export class LocationsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all storage locations for the current user' })
+  @ApiOperation({ summary: 'Get all locations for the current user' })
   @ApiResponse({
     status: 200,
-    description: 'List of locations retrieved successfully.',
+    description: 'The list of locations has been successfully retrieved.',
     type: [LocationResponseDto],
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad Request.' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   findAll(@Query() query: LocationQueryDto, @CurrentUser() user: JwtPayload) {
     return this.locationsService.findAll(query, user.id);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a single storage location by ID' })
-  @ApiParam({ name: 'id', type: Number, description: 'Location ID' })
+  @ApiOperation({ summary: 'Get a location by ID' })
   @ApiResponse({
     status: 200,
-    description: 'Location retrieved successfully.',
-    type: LocationResponseDto,
+    description: 'The location has been successfully retrieved.',
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
-  @ApiResponse({ status: 404, description: 'Location not found.', type: ErrorResponseDto })
+  @ApiResponse({ status: 404, description: 'Location not found.' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.locationsService.findOne(+id, user.id);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a storage location' })
-  @ApiParam({ name: 'id', type: Number, description: 'Location ID' })
-  @ApiBody({ type: UpdateLocationDto })
+  @ApiOperation({ summary: 'Update a location' })
   @ApiResponse({
     status: 200,
-    description: 'Location updated successfully.',
-    type: LocationResponseDto,
+    description: 'The location has been successfully updated.',
   })
-  @ApiResponse({ status: 400, description: 'Validation failed.', type: ErrorResponseDto })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
-  @ApiResponse({ status: 404, description: 'Location not found.', type: ErrorResponseDto })
+  @ApiResponse({ status: 404, description: 'Location not found.' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   update(
     @Param('id') id: string,
     @Body() updateLocationDto: UpdateLocationDto,
@@ -93,12 +77,13 @@ export class LocationsController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete a storage location' })
-  @ApiParam({ name: 'id', type: Number, description: 'Location ID' })
-  @ApiResponse({ status: 200, description: 'Location deleted successfully.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
-  @ApiResponse({ status: 404, description: 'Location not found.', type: ErrorResponseDto })
-  @ApiResponse({ status: 409, description: 'Location still has inventory items.', type: ErrorResponseDto })
+  @ApiOperation({ summary: 'Delete a location' })
+  @ApiResponse({
+    status: 200,
+    description: 'The location has been successfully deleted.',
+  })
+  @ApiResponse({ status: 404, description: 'Location not found.' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error.' })
   remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.locationsService.remove(+id, user.id);
   }
