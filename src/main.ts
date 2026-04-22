@@ -31,11 +31,15 @@ async function bootstrap() {
     .setTitle('CryoERP API')
     .setDescription('Home grocery inventory and tracking system')
     .setVersion('1.0')
-    .addCookieAuth('access_token')
+    .addCookieAuth(
+      'access_token',
+      { type: 'apiKey', in: 'cookie', name: 'access_token' },
+      'access_token',
+    )
     .addApiKey(
       {
         type: 'apiKey',
-        name: 'X-api-key',
+        name: 'X-API-Key',
         in: 'header',
       },
       'api-key',

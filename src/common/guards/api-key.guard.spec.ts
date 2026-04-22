@@ -6,7 +6,7 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 describe('ApiKeyGuard', () => {
   let guard: ApiKeyGuard;
-  let configService: { get: jest.Mock };
+  let configService: { getOrThrow: jest.Mock };
   let reflector: { getAllAndOverride: jest.Mock };
 
   const createContext = (headers: Record<string, string> = {}): ExecutionContext =>
@@ -19,7 +19,7 @@ describe('ApiKeyGuard', () => {
     }) as unknown as ExecutionContext;
 
   beforeEach(() => {
-    configService = { get: jest.fn().mockReturnValue('secret-key') };
+    configService = { getOrThrow: jest.fn().mockReturnValue('secret-key') };
     reflector = { getAllAndOverride: jest.fn().mockReturnValue(false) };
     guard = new ApiKeyGuard(
       configService as unknown as ConfigService,
@@ -53,7 +53,7 @@ describe('ApiKeyGuard', () => {
   });
 
   it('should return true when the second key in the comma-separated list matches', () => {
-    configService.get.mockReturnValue('first-key, secret-key');
+    configService.getOrThrow.mockReturnValue('first-key, secret-key');
     const ctx = createContext({ 'x-api-key': 'secret-key' });
     expect(guard.canActivate(ctx)).toBe(true);
   });

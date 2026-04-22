@@ -15,7 +15,7 @@ import { UpdateLocationDto } from './dto/update-location.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/interfaces/jwt-payload.interface';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { LocationResponseDto } from 'test/locations.e2e-spec';
+import { LocationResponseDto } from './dto/location-response.dto';
 @Controller('locations')
 export class LocationsController {
   constructor(private readonly locationsService: LocationsService) {}
