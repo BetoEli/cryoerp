@@ -14,6 +14,7 @@ import {
   ApiBody,
   ApiParam,
   ApiCookieAuth,
+  ApiTags,
 } from '@nestjs/swagger';
 import { IngredientsService } from './ingredients.service';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
@@ -25,6 +26,7 @@ import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../user/role.enum';
 
+@ApiTags('Ingredients')
 @Controller('ingredients')
 export class IngredientsController {
   constructor(private readonly ingredientsService: IngredientsService) {}
@@ -32,14 +34,22 @@ export class IngredientsController {
   @Post()
   @ApiCookieAuth('access_token')
   @ApiOperation({ summary: 'Create a new ingredient' })
-  @ApiBody({ type: CreateIngredientDto })
+  @ApiBody({ type: CreateIngredientDto, description: 'Ingredient to create' })
   @ApiResponse({
     status: 201,
     description: 'Ingredient created successfully.',
     type: IngredientResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Validation failed.', type: ErrorResponseDto })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed.',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    type: ErrorResponseDto,
+  })
   create(@Body() createIngredientDto: CreateIngredientDto) {
     return this.ingredientsService.create(createIngredientDto);
   }
@@ -52,7 +62,11 @@ export class IngredientsController {
     description: 'List of ingredients retrieved successfully.',
     type: [IngredientResponseDto],
   })
-  @ApiResponse({ status: 400, description: 'Validation failed.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed.',
+    type: ErrorResponseDto,
+  })
   findAll(@Query() query: IngredientQueryDto) {
     return this.ingredientsService.findAll(query);
   }
@@ -63,14 +77,17 @@ export class IngredientsController {
   @ApiParam({
     name: 'code',
     description: 'Barcode string (8–14 digits)',
-    example: '0123456789012',
   })
   @ApiResponse({
     status: 200,
     description: 'Ingredient retrieved successfully.',
     type: IngredientResponseDto,
   })
-  @ApiResponse({ status: 404, description: 'Ingredient not found.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 404,
+    description: 'Ingredient not found.',
+    type: ErrorResponseDto,
+  })
   findByBarcode(@Param('code') code: string) {
     return this.ingredientsService.findByBarcode(code);
   }
@@ -84,7 +101,11 @@ export class IngredientsController {
     description: 'Ingredient retrieved successfully.',
     type: IngredientResponseDto,
   })
-  @ApiResponse({ status: 404, description: 'Ingredient not found.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 404,
+    description: 'Ingredient not found.',
+    type: ErrorResponseDto,
+  })
   findOne(@Param('id') id: string) {
     return this.ingredientsService.findOne(+id);
   }
@@ -93,15 +114,30 @@ export class IngredientsController {
   @ApiCookieAuth('access_token')
   @ApiOperation({ summary: 'Update an ingredient' })
   @ApiParam({ name: 'id', type: Number, description: 'Ingredient ID' })
-  @ApiBody({ type: UpdateIngredientDto })
+  @ApiBody({
+    type: UpdateIngredientDto,
+    description: 'Fields to update on the ingredient',
+  })
   @ApiResponse({
     status: 200,
     description: 'Ingredient updated successfully.',
     type: IngredientResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Validation failed.', type: ErrorResponseDto })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
-  @ApiResponse({ status: 404, description: 'Ingredient not found.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed.',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Ingredient not found.',
+    type: ErrorResponseDto,
+  })
   update(
     @Param('id') id: string,
     @Body() updateIngredientDto: UpdateIngredientDto,
@@ -115,10 +151,26 @@ export class IngredientsController {
   @ApiOperation({ summary: 'Delete an ingredient (admin only)' })
   @ApiParam({ name: 'id', type: Number, description: 'Ingredient ID' })
   @ApiResponse({ status: 200, description: 'Ingredient deleted successfully.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
-  @ApiResponse({ status: 403, description: 'Forbidden – admin role required.', type: ErrorResponseDto })
-  @ApiResponse({ status: 404, description: 'Ingredient not found.', type: ErrorResponseDto })
-  @ApiResponse({ status: 409, description: 'Ingredient is referenced by recipes or inventory items.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden – admin role required.',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Ingredient not found.',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Ingredient is referenced by recipes or inventory items.',
+    type: ErrorResponseDto,
+  })
   remove(@Param('id') id: string) {
     return this.ingredientsService.remove(+id);
   }

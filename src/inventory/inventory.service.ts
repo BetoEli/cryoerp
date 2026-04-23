@@ -126,7 +126,11 @@ export class InventoryService {
     return item;
   }
 
-  async update(id: number, updateInventoryDto: UpdateInventoryItemDto, userId: number) {
+  async update(
+    id: number,
+    updateInventoryDto: UpdateInventoryItemDto,
+    userId: number,
+  ) {
     const item = await this.findOne(id, userId);
 
     if (

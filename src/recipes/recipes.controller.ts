@@ -13,6 +13,7 @@ import {
   ApiBody,
   ApiParam,
   ApiCookieAuth,
+  ApiTags,
 } from '@nestjs/swagger';
 import { RecipesService } from './recipes.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
@@ -24,6 +25,7 @@ import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/interfaces/jwt-payload.interface';
 
+@ApiTags('Recipes')
 @ApiCookieAuth('access_token')
 @Controller('recipes')
 export class RecipesController {
@@ -31,14 +33,22 @@ export class RecipesController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new recipe' })
-  @ApiBody({ type: CreateRecipeDto })
+  @ApiBody({ type: CreateRecipeDto, description: 'Recipe to create' })
   @ApiResponse({
     status: 201,
     description: 'Recipe created successfully.',
     type: RecipeResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Validation failed.', type: ErrorResponseDto })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed.',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    type: ErrorResponseDto,
+  })
   create(
     @Body() createRecipeDto: CreateRecipeDto,
     @CurrentUser() user: JwtPayload,
@@ -53,19 +63,29 @@ export class RecipesController {
     description: 'List of recipes retrieved successfully.',
     type: [RecipeResponseDto],
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    type: ErrorResponseDto,
+  })
   findAll(@CurrentUser() user: JwtPayload) {
     return this.recipesService.findAll(user.id);
   }
 
   @Get('available')
-  @ApiOperation({ summary: 'List recipes that can be made with current inventory' })
+  @ApiOperation({
+    summary: 'List recipes that can be made with current inventory',
+  })
   @ApiResponse({
     status: 200,
     description: 'List of makeable recipes retrieved successfully.',
     type: [RecipeResponseDto],
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    type: ErrorResponseDto,
+  })
   findAvailable(@CurrentUser() user: JwtPayload) {
     return this.recipesService.findAvailable(user.id);
   }
@@ -78,36 +98,64 @@ export class RecipesController {
     description: 'Recipe retrieved successfully.',
     type: RecipeResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
-  @ApiResponse({ status: 404, description: 'Recipe not found.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Recipe not found.',
+    type: ErrorResponseDto,
+  })
   findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.recipesService.findOne(+id, user.id);
   }
 
   @Get(':id/availability')
-  @ApiOperation({ summary: 'Check if a recipe can be made with current inventory' })
+  @ApiOperation({
+    summary: 'Check if a recipe can be made with current inventory',
+  })
   @ApiParam({ name: 'id', type: Number, description: 'Recipe ID' })
   @ApiResponse({
     status: 200,
     description: 'Availability check completed successfully.',
     type: AvailabilityResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
-  @ApiResponse({ status: 404, description: 'Recipe not found.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Recipe not found.',
+    type: ErrorResponseDto,
+  })
   checkAvailability(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.recipesService.checkAvailability(+id, user.id);
   }
 
   @Get(':id/shopping-list')
-  @ApiOperation({ summary: 'Get a shopping list of missing ingredients for a recipe' })
+  @ApiOperation({
+    summary: 'Get a shopping list of missing ingredients for a recipe',
+  })
   @ApiParam({ name: 'id', type: Number, description: 'Recipe ID' })
   @ApiResponse({
     status: 200,
     description: 'Shopping list retrieved successfully.',
     type: ShoppingListResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
-  @ApiResponse({ status: 404, description: 'Recipe not found.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Recipe not found.',
+    type: ErrorResponseDto,
+  })
   getShoppingList(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.recipesService.getShoppingList(+id, user.id);
   }
@@ -115,15 +163,30 @@ export class RecipesController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update a recipe' })
   @ApiParam({ name: 'id', type: Number, description: 'Recipe ID' })
-  @ApiBody({ type: UpdateRecipeDto })
+  @ApiBody({
+    type: UpdateRecipeDto,
+    description: 'Fields to update on the recipe',
+  })
   @ApiResponse({
     status: 200,
     description: 'Recipe updated successfully.',
     type: RecipeResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Validation failed.', type: ErrorResponseDto })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
-  @ApiResponse({ status: 404, description: 'Recipe not found.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed.',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Recipe not found.',
+    type: ErrorResponseDto,
+  })
   update(
     @Param('id') id: string,
     @Body() updateRecipeDto: UpdateRecipeDto,
@@ -136,8 +199,16 @@ export class RecipesController {
   @ApiOperation({ summary: 'Delete a recipe' })
   @ApiParam({ name: 'id', type: Number, description: 'Recipe ID' })
   @ApiResponse({ status: 200, description: 'Recipe deleted successfully.' })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
-  @ApiResponse({ status: 404, description: 'Recipe not found.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Recipe not found.',
+    type: ErrorResponseDto,
+  })
   remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.recipesService.remove(+id, user.id);
   }

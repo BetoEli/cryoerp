@@ -47,7 +47,11 @@ export class LocationsService {
     }
   }
 
-  async update(id: number, updateLocationDto: UpdateLocationDto, userId: number) {
+  async update(
+    id: number,
+    updateLocationDto: UpdateLocationDto,
+    userId: number,
+  ) {
     const location = await this.findOne(id, userId);
     Object.assign(location, updateLocationDto);
     await this.em.flush();

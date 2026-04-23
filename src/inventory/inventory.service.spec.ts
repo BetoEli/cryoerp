@@ -69,16 +69,22 @@ describe('InventoryService', () => {
       .mockResolvedValueOnce(location);
     mockEm.create.mockReturnValue(created);
 
-    const result = await service.create({
-      ingredientId: 10,
-      locationId: 20,
-      quantity: 2.5,
-      unit: 'lbs',
-      expirationDate: '2026-04-24T00:00:00Z',
-    }, USER_ID);
+    const result = await service.create(
+      {
+        ingredientId: 10,
+        locationId: 20,
+        quantity: 2.5,
+        unit: 'lbs',
+        expirationDate: '2026-04-24T00:00:00Z',
+      },
+      USER_ID,
+    );
 
     expect(mockEm.findOne).toHaveBeenNthCalledWith(1, Ingredient, { id: 10 });
-    expect(mockEm.findOne).toHaveBeenNthCalledWith(2, Location, { id: 20, user: USER_ID });
+    expect(mockEm.findOne).toHaveBeenNthCalledWith(2, Location, {
+      id: 20,
+      user: USER_ID,
+    });
     expect(mockEm.create).toHaveBeenCalledWith(
       InventoryItem,
       expect.objectContaining({
@@ -103,12 +109,15 @@ describe('InventoryService', () => {
     mockEm.findOne.mockResolvedValueOnce(null);
 
     await expect(
-      service.create({
-        ingredientId: 404,
-        locationId: 20,
-        quantity: 2.5,
-        unit: 'lbs',
-      }, USER_ID),
+      service.create(
+        {
+          ingredientId: 404,
+          locationId: 20,
+          quantity: 2.5,
+          unit: 'lbs',
+        },
+        USER_ID,
+      ),
     ).rejects.toThrow(NotFoundException);
 
     expect(mockEm.findOne).toHaveBeenCalledWith(Ingredient, { id: 404 });
@@ -121,16 +130,22 @@ describe('InventoryService', () => {
       .mockResolvedValueOnce(null);
 
     await expect(
-      service.create({
-        ingredientId: 10,
-        locationId: 999,
-        quantity: 2.5,
-        unit: 'lbs',
-      }, USER_ID),
+      service.create(
+        {
+          ingredientId: 10,
+          locationId: 999,
+          quantity: 2.5,
+          unit: 'lbs',
+        },
+        USER_ID,
+      ),
     ).rejects.toThrow(NotFoundException);
 
     expect(mockEm.findOne).toHaveBeenNthCalledWith(1, Ingredient, { id: 10 });
-    expect(mockEm.findOne).toHaveBeenNthCalledWith(2, Location, { id: 999, user: USER_ID });
+    expect(mockEm.findOne).toHaveBeenNthCalledWith(2, Location, {
+      id: 999,
+      user: USER_ID,
+    });
   });
 
   it('populates ingredient and location', async () => {
@@ -184,7 +199,10 @@ describe('InventoryService', () => {
     const findCalls = mockEm.find.mock.calls as Array<
       [
         typeof InventoryItem,
-        { expirationDate: { $gte: Date; $lte: Date }; location: { user: number } },
+        {
+          expirationDate: { $gte: Date; $lte: Date };
+          location: { user: number };
+        },
         { populate: string[]; orderBy: { expirationDate: 'asc' } },
       ]
     >;
@@ -220,15 +238,22 @@ describe('InventoryService', () => {
       .mockResolvedValueOnce(newLocation);
     mockEm.flush.mockResolvedValue(undefined);
 
-    const result = await service.update(77, {
-      ingredientId: 2,
-      locationId: 11,
-      quantity: 9,
-      unit: 'lbs',
-    }, USER_ID);
+    const result = await service.update(
+      77,
+      {
+        ingredientId: 2,
+        locationId: 11,
+        quantity: 9,
+        unit: 'lbs',
+      },
+      USER_ID,
+    );
 
     expect(mockEm.findOne).toHaveBeenNthCalledWith(1, Ingredient, { id: 2 });
-    expect(mockEm.findOne).toHaveBeenNthCalledWith(2, Location, { id: 11, user: USER_ID });
+    expect(mockEm.findOne).toHaveBeenNthCalledWith(2, Location, {
+      id: 11,
+      user: USER_ID,
+    });
     expect(item.ingredient).toBe(newIngredient);
     expect(item.location).toBe(newLocation);
     expect(item.quantity).toBe(9);

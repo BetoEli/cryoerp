@@ -1,10 +1,11 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { MikroORM } from '@mikro-orm/postgresql';
 import { Public } from '../common/decorators/public.decorator';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { HealthResponseDto } from './dto/health-response.dto';
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
 
+@ApiTags('Health')
 @Controller('health')
 export class HealthController {
   constructor(private readonly orm: MikroORM) {}

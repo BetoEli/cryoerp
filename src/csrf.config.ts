@@ -7,7 +7,12 @@ const { doubleCsrfProtection, generateCsrfToken } = doubleCsrf({
   },
   getSessionIdentifier: (req) => req.cookies?.['access_token'] ?? '',
   cookieName: '__csrf',
-  cookieOptions: { sameSite: 'strict', secure: false, httpOnly: false, path: '/' },
+  cookieOptions: {
+    sameSite: 'strict',
+    secure: false,
+    httpOnly: false,
+    path: '/',
+  },
   getCsrfTokenFromRequest: (req) => req.headers['x-csrf-token'] as string,
 });
 

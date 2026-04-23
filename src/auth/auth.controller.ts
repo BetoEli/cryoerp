@@ -1,10 +1,19 @@
-import { Body, Controller, Get, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { Request, Response } from 'express';
 import {
   ApiOperation,
   ApiResponse,
   ApiBody,
   ApiCookieAuth,
+  ApiTags,
 } from '@nestjs/swagger';
 import { UserService } from '../user/user.service';
 import { AuthService } from './auth.service';
@@ -21,6 +30,7 @@ import {
 import { ErrorResponseDto } from '../common/dto/error-response.dto';
 import { generateCsrfToken } from '../csrf.config';
 
+@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -31,14 +41,22 @@ export class AuthController {
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register a new user account' })
-  @ApiBody({ type: RegisterDto })
+  @ApiBody({ type: RegisterDto, description: 'New user registration details' })
   @ApiResponse({
     status: 201,
     description: 'Account created successfully.',
     type: RegisterResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Validation failed.', type: ErrorResponseDto })
-  @ApiResponse({ status: 409, description: 'Email or username already in use.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed.',
+    type: ErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Email or username already in use.',
+    type: ErrorResponseDto,
+  })
   async register(@Body() dto: RegisterDto): Promise<RegisterResponseDto> {
     return this.userService.create(dto.email, dto.username, dto.password);
   }
@@ -46,13 +64,17 @@ export class AuthController {
   @Public()
   @Post('login')
   @ApiOperation({ summary: 'Log in and receive a session cookie' })
-  @ApiBody({ type: LoginDto })
+  @ApiBody({ type: LoginDto, description: 'User credentials to authenticate' })
   @ApiResponse({
     status: 201,
     description: 'Login successful. Sets an httpOnly access_token cookie.',
     type: LoginResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Invalid email or password.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid email or password.',
+    type: ErrorResponseDto,
+  })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -79,7 +101,9 @@ export class AuthController {
 
   @Public()
   @Get('csrf-token')
-  @ApiOperation({ summary: 'Fetch a CSRF token required for mutating requests' })
+  @ApiOperation({
+    summary: 'Fetch a CSRF token required for mutating requests',
+  })
   @ApiResponse({
     status: 200,
     description: 'CSRF token returned. Send it as the x-csrf-token header.',
@@ -97,7 +121,11 @@ export class AuthController {
     description: 'User profile retrieved successfully.',
     type: ProfileResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    type: ErrorResponseDto,
+  })
   getProfile(@CurrentUser() user: ProfileResponseDto) {
     return user;
   }
@@ -110,7 +138,11 @@ export class AuthController {
     description: 'Logged out successfully.',
     type: LogoutResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized.', type: ErrorResponseDto })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized.',
+    type: ErrorResponseDto,
+  })
   logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('access_token', {
       httpOnly: true,
